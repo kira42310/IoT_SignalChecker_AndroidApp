@@ -1,0 +1,7 @@
+{
+  "name": "TrueIoT",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
