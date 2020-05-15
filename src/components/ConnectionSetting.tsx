@@ -13,20 +13,16 @@ import {
   IonButton,
   IonAlert,
 } from "@ionic/react";
+import { AppSettings } from "../AppSettings"
 
 const ConnectionSetting: React.FC<{
-  defaultIP: string;
-  defaultPort: number;
-  defaultCellular: "NB-IoT" | "Cat-M1";
-  defaultGSM: "900MHz" | "1800MHz";
-  defaultLTE: string;
   onChangeIsConnect: (isConnect: boolean, rpiDestination: string) => void;
 }> = (props) => {
-  const [rpiIP, setRPiIP] = useState<string>(props.defaultIP);
-  const [rpiPort, setRPiPort] = useState<number>(props.defaultPort);
-  const [cellular, setCellular] = useState<string>(props.defaultCellular);
-  const [gsm, setGSM] = useState<string>(props.defaultGSM);
-  const [lte, setLTE] = useState(props.defaultLTE);
+  const [rpiIP, setRPiIP] = useState<string>(AppSettings.RPI_IP);
+  const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
+  const [cellular, setCellular] = useState<string>(AppSettings.MODE);
+  const [gsm, setGSM] = useState<string>(AppSettings.BAND);
+  const [lte, setLTE] = useState(AppSettings.LTE);
   const [errorConnection, setErrorConnection] = useState<string>();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
 
