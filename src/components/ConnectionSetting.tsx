@@ -7,8 +7,8 @@ import {
   IonRow,
   IonCol,
   IonItem,
-  IonSelect,
-  IonSelectOption,
+  // IonSelect,
+  // IonSelectOption,
   IonInput,
   IonButton,
   IonAlert,
@@ -72,10 +72,17 @@ const ConnectionSetting: React.FC<{
   return (
     <IonGrid>
       <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonLabel>Mode</IonLabel>
+        </IonCol>
+      </IonRow>
+      <IonRow>
         <IonCol>
           <IonItem>
-            <IonLabel position="fixed">Cellular mode</IonLabel>
             <IonSegment value={cellular} onIonChange={(e) => setCellular(e.detail.value!)}>
+              <IonSegmentButton value="AUTO">
+                <IonLabel>Auto</IonLabel>
+              </IonSegmentButton>
               <IonSegmentButton value="NB-IoT">
                 <IonLabel>NB-IoT</IonLabel>
               </IonSegmentButton>
@@ -87,10 +94,17 @@ const ConnectionSetting: React.FC<{
         </IonCol>
       </IonRow>
       <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonLabel>Band</IonLabel>
+        </IonCol>
+      </IonRow>
+      <IonRow>
         <IonCol>
           <IonItem>
-            <IonLabel position="fixed">GSM Band</IonLabel>
             <IonSegment value={gsm} onIonChange={(e) => setGSM(e.detail.value!)}>
+              <IonSegmentButton value="AUTO">
+                <IonLabel>Auto</IonLabel>
+              </IonSegmentButton>
               <IonSegmentButton value="900MHz">
                 <IonLabel>900MHz</IonLabel>
               </IonSegmentButton>
@@ -101,7 +115,7 @@ const ConnectionSetting: React.FC<{
           </IonItem>
         </IonCol>
       </IonRow>
-      <IonRow>
+      {/* <IonRow>
         <IonCol>
           <IonItem>
             <IonLabel>LTE Band</IonLabel>
@@ -112,24 +126,26 @@ const ConnectionSetting: React.FC<{
             </IonSelect>
           </IonItem>
         </IonCol>
-      </IonRow>
+      </IonRow> */}
       <IonRow>
-        <IonCol size="8">
+        <IonCol size="8" className="ion-margin-top">
+          <IonLabel>Rasspberry Pi IP</IonLabel>
           <IonItem>
-            <IonLabel position="floating">RPi IP:</IonLabel>
+            {/* <IonLabel position="floating">RPi IP:</IonLabel> */}
             <IonInput value={rpiIP} onIonChange={(e) => setRPiIP(e.detail.value!)} color={validateIPAddress(rpiIP) ? "success" : "danger"}></IonInput>
           </IonItem>
         </IonCol>
-        <IonCol size="4">
+        <IonCol size="4" className="ion-margin-top">
+          <IonLabel>Port</IonLabel>
           <IonItem>
-            <IonLabel position="floating">Port:</IonLabel>
+            {/* <IonLabel position="floating">Port:</IonLabel> */}
             <IonInput type="number" value={rpiPort} onIonChange={(e) => setRPiPort(+e.detail.value!)}></IonInput>
           </IonItem>
         </IonCol>
       </IonRow>
       <IonRow>
-        <IonCol>
-          <IonButton onClick={rpiConnect}>Connect</IonButton>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={rpiConnect} expand="full" size="large">Connect</IonButton>
         </IonCol>
         {/* <IonCol>{rpiIP + "," + connectionStatus}</IonCol> */}
       </IonRow>

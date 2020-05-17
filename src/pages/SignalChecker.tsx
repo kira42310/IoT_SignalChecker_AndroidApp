@@ -11,6 +11,8 @@ import {
   IonLabel,
   IonAlert,
   IonButton,
+  IonModal,
+  IonButtons,
 } from "@ionic/react";
 import { useCurrentPosition } from "@ionic/react-hooks/geolocation";
 import ConnectionSetting from "../components/ConnectionSetting";
@@ -18,15 +20,16 @@ import { AppSettings } from "../AppSettings";
 
 const SignalChecker: React.FC = () => {
 
-  const[ isConnect, setIsConnect ] = useState<boolean>(false);
-  const[ rpiDestination, setRPiDestination ] = useState<string>();
-  const[ errorConnection, setErrorConnection ] = useState<string>();
+  const [ isConnect, setIsConnect ] = useState<boolean>(false);
+  const [ rpiDestination, setRPiDestination ] = useState<string>();
+  const [ errorConnection, setErrorConnection ] = useState<string>();
   const [immi, setIMMI] = useState<string>();
   const [rssi, setRSSI] = useState<string>();
   const [rsrp, setRSRP] = useState<string>();
   const [sinq, setSINQ] = useState<string>();
   const [rsrq, setRSRQ] = useState<string>();
-  const{ currentPosition, getPosition } = useCurrentPosition();
+  const { currentPosition, getPosition } = useCurrentPosition();
+  const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
 
   const signalStrength = async () => {
     const signalStrength = await fetch("http://" + rpiDestination + "/")
@@ -80,8 +83,12 @@ const SignalChecker: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent>
-        <ConnectionSetting onChangeIsConnect={changeIsConnect}/>
         <IonGrid>
+          <IonRow>
+            <IonCol>
+              <IonButton onClick={ () => setConnectionWindow(true) } expand="full">Signal and RPi Settings</IonButton>
+            </IonCol>
+          </IonRow>
           <IonRow>
             <IonCol size="2">
               <IonLabel>Status:</IonLabel>
@@ -124,6 +131,17 @@ const SignalChecker: React.FC = () => {
           </IonRow>
         </IonGrid>
       </IonContent>
+      <IonModal isOpen={connectionWindow}>
+        <IonHeader translucent>
+          <IonToolbar>
+            <IonTitle>Sigal and RPi Settings</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={ () => setConnectionWindow(false) }>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <ConnectionSetting onChangeIsConnect={changeIsConnect}/>
+      </IonModal>
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
     </IonPage>
   );
