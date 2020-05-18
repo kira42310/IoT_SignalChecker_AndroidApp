@@ -26,7 +26,7 @@ const SignalChecker: React.FC = () => {
   const [immi, setIMMI] = useState<string>();
   const [rssi, setRSSI] = useState<string>();
   const [rsrp, setRSRP] = useState<string>();
-  const [sinq, setSINQ] = useState<string>();
+  const [sinr, setSINR] = useState<string>();
   const [rsrq, setRSRQ] = useState<string>();
   const { currentPosition, getPosition } = useCurrentPosition();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
@@ -39,7 +39,7 @@ const SignalChecker: React.FC = () => {
     setIMMI(signalStrength[0]);
     setRSSI(signalStrength[1]);
     setRSRP(signalStrength[2]);
-    setSINQ(signalStrength[3]);
+    setSINR(signalStrength[3]);
     setRSRQ(signalStrength[4]);
     const dbOption = {
       method: "POST",
@@ -48,7 +48,7 @@ const SignalChecker: React.FC = () => {
         immi: signalStrength[0],
         rssi: signalStrength[1],
         rsrp: signalStrength[2],
-        sinq: signalStrength[3],
+        sinr: signalStrength[3],
         rsrq: signalStrength[4],
         pci: "xxx",
         cellular: "NB-IoT",
@@ -112,8 +112,8 @@ const SignalChecker: React.FC = () => {
             <IonCol><IonLabel>{rsrp}</IonLabel></IonCol>
           </IonRow>
           <IonRow>
-            <IonCol size="2"><IonLabel>SINQ:</IonLabel></IonCol>
-            <IonCol><IonLabel>{sinq}</IonLabel></IonCol>
+            <IonCol size="2"><IonLabel>SINR:</IonLabel></IonCol>
+            <IonCol><IonLabel>{sinr}</IonLabel></IonCol>
           </IonRow>
           <IonRow>
             <IonCol size="2"><IonLabel>RSRQ:</IonLabel></IonCol>
