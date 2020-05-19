@@ -14,6 +14,7 @@ import { Route, } from "react-router-dom";
 import SignalChecker from "./pages/SignalChecker";
 import MapInfo from "./pages/MapInfo";
 import HistorySearch from "./pages/HistorySearch";
+import { AppSettings } from "./AppSettings"
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -60,6 +61,7 @@ const App: React.FC = () => {
           </IonTabs>
         </IonReactRouter>
       </IonApp>
+      <script async defer src={"http://maps.google.com/maps/api/js?key="+AppSettings.GOOGLE_MAP_API+"&callback=initMap"} type="text/javascript"/>
     </React.Fragment>
   );
 };

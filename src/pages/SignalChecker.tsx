@@ -50,7 +50,7 @@ const SignalChecker: React.FC = () => {
         rsrp: signalStrength[2],
         sinr: signalStrength[3],
         rsrq: signalStrength[4],
-        pci: "xxx",
+        pcid: signalStrength[5],
         cellular: "NB-IoT",
         gsm: "900MHz",
         lte: "B8",
