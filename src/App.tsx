@@ -61,7 +61,6 @@ const App: React.FC = () => {
           </IonTabs>
         </IonReactRouter>
       </IonApp>
-      <script async defer src={"http://maps.google.com/maps/api/js?key="+AppSettings.GOOGLE_MAP_API+"&callback=initMap"} type="text/javascript"/>
     </React.Fragment>
   );
 };
