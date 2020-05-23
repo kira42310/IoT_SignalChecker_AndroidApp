@@ -23,11 +23,11 @@ const SignalChecker: React.FC = () => {
   const [ isConnect, setIsConnect ] = useState<boolean>(false);
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ errorConnection, setErrorConnection ] = useState<string>();
-  const [immi, setIMMI] = useState<string>();
-  const [rssi, setRSSI] = useState<string>();
-  const [rsrp, setRSRP] = useState<string>();
-  const [sinr, setSINR] = useState<string>();
-  const [rsrq, setRSRQ] = useState<string>();
+  const [ immi, setIMMI ] = useState<string>();
+  const [ rssi, setRSSI ] = useState<string>();
+  const [ rsrp, setRSRP ] = useState<string>();
+  const [ sinr, setSINR ] = useState<string>();
+  const [ rsrq, setRSRQ ] = useState<string>();
   const { currentPosition, getPosition } = useCurrentPosition();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
 
@@ -35,7 +35,7 @@ const SignalChecker: React.FC = () => {
     const signalStrength = await fetch("http://" + rpiDestination + "/")
       .then((response) => response.json())
       .then((data) => { return data });
-    getPosition({ timeout: 30000 });
+    getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
     setIMMI(signalStrength[0]);
     setRSSI(signalStrength[1]);
     setRSRP(signalStrength[2]);

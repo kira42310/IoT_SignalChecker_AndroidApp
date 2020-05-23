@@ -26,6 +26,7 @@ const MapInterface: React.FC<{
           }
       );
     }
+    getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
     fetchData();
   }, []);
 
@@ -40,8 +41,14 @@ const MapInterface: React.FC<{
   }
   
   const onMapLoad = async () => {
-    getPosition();
+    // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
     setIsMapLoaded(true);
+    console.log(center)
+  };
+
+  const onScriptLoad = async () => {
+    // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
+    console.log(center);
   };
 
   function createKey(location: { lat: number, lng: number }): React.ReactText {
@@ -49,7 +56,7 @@ const MapInterface: React.FC<{
   }
 
   const renderMap = () =>
-    <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} >
+    <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} onLoad={onScriptLoad}>
       <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={14} onLoad={onMapLoad}>
         <MarkerClusterer>
           {
