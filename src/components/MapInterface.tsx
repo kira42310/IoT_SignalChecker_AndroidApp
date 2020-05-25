@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonLoading, } from "@ionic/react"
+import { IonLoading, IonLabel, } from "@ionic/react"
 import { GoogleMap, LoadScript, Marker, MarkerClusterer } from "@react-google-maps/api";
 import { useCurrentPosition } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
@@ -26,7 +26,6 @@ const MapInterface: React.FC<{
           }
       );
     }
-    getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
     fetchData();
   }, []);
 
@@ -43,12 +42,11 @@ const MapInterface: React.FC<{
   const onMapLoad = async () => {
     // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
     setIsMapLoaded(true);
-    console.log(center)
   };
 
   const onScriptLoad = async () => {
-    // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
-    console.log(center);
+    getPosition();
+    console.log( center );
   };
 
   function createKey(location: { lat: number, lng: number }): React.ReactText {
@@ -57,7 +55,7 @@ const MapInterface: React.FC<{
 
   const renderMap = () =>
     <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} onLoad={onScriptLoad}>
-      <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={14} onLoad={onMapLoad}>
+      <GoogleMap mapContainerStyle={containerStyle} zoom={14} onLoad={onMapLoad} center={center}>
         <MarkerClusterer>
           {
             clusterer => markers.map( location => (
@@ -65,9 +63,9 @@ const MapInterface: React.FC<{
             ))
           }
         </MarkerClusterer>
-        {/* <Marker position={markers}/> */}
       </GoogleMap>
       <IonLoading isOpen={!isMapLoaded} />
+      <IonLabel>Latitude: {currentPosition?.coords.latitude}{"\n"}Longitude: {currentPosition?.coords.longitude}</IonLabel>
     </LoadScript>
 
   return renderMap();

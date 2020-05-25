@@ -6,8 +6,7 @@ import {
   IonTitle,
   IonContent, 
 } from "@ionic/react";
-import MistoryCard from "../components/HistoryCard";
-import HistoryCard from "../components/MapInterface";
+import HistoryCard from "../components/HistoryCard";
 
 const HistorySearch: React.FC = () => {
   return (

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { IonCard } from "@ionic/react";
-import { AppSettings } from "../AppSettings"
+// import { AppSettings } from "../AppSettings"
 
 const HistoryCard: React.FC<{}> = (props) => {
 

@@ -1,4 +1,4 @@
-import React, { useState, } from "react";
+import React, { useState } from "react";
 import { 
   IonPage, 
   IonHeader, 
@@ -30,6 +30,8 @@ const SignalChecker: React.FC = () => {
   const [ rsrq, setRSRQ ] = useState<string>();
   const { currentPosition, getPosition } = useCurrentPosition();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
+  const [ isTrack, setIsTrack ] = useState<boolean>(false);
+  const [ trackHandler, setTrackHandler ] = useState<any>();
 
   const signalStrength = async () => {
     const signalStrength = await fetch("http://" + rpiDestination + "/")
@@ -66,6 +68,18 @@ const SignalChecker: React.FC = () => {
     console.log(result);
   };
 
+  const signalTracker = () => {
+    if(isTrack) {
+      setIsTrack(false)
+      clearInterval(trackHandler);
+    }
+    else{
+      setIsTrack(true);
+      const trackerHandler = setInterval( () => {console.log(isTrack)}, 1000);
+      setTrackHandler(trackerHandler);
+    }
+  };
+
   const changeIsConnect = ( connection: boolean, destination: string ) => {
     setIsConnect(connection);
     setRPiDestination(destination);
@@ -100,7 +114,10 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={signalStrength} disabled={isConnect ? false : true}>test</IonButton>
+              <IonButton onClick={signalStrength} disabled={!isConnect}>Test</IonButton>
+            </IonCol>
+            <IonCol>
+              <IonButton onClick={signalTracker} >Test Tracking</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
