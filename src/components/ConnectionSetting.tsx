@@ -20,8 +20,8 @@ const ConnectionSetting: React.FC<{
 }> = (props) => {
   const [rpiIP, setRPiIP] = useState<string>(AppSettings.RPI_IP);
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
-  const [cellular, setCellular] = useState<string>(AppSettings.MODE);
-  const [gsm, setGSM] = useState<string>(AppSettings.BAND);
+  const [mode, setMode] = useState<string>(AppSettings.MODE);
+  const [band, setBand] = useState<string>(AppSettings.BAND);
   const [lte, setLTE] = useState(AppSettings.LTE);
   const [errorConnection, setErrorConnection] = useState<string>();
   const [connectionStatus, setConnectionStatus] = useState<boolean>(false);
@@ -63,7 +63,7 @@ const ConnectionSetting: React.FC<{
 
   const rpiConnect = async () => {
     //if (ipPortInput()) return;
-    const uri = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?cellular=" + cellular + "&gsm=" + gsm + "&lte=" + lte)
+    const uri = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
     fetch(uri)
       .then((response) => response.json())
       .then((data) => { setConnectionStatus(data); props.onChangeIsConnect(data, rpiIP + ":" + rpiPort); });
@@ -79,14 +79,14 @@ const ConnectionSetting: React.FC<{
       <IonRow>
         <IonCol>
           <IonItem>
-            <IonSegment value={cellular} onIonChange={(e) => setCellular(e.detail.value!)}>
-              <IonSegmentButton value="AUTO">
+            <IonSegment value={mode} onIonChange={(e) => setMode(e.detail.value!)}>
+              <IonSegmentButton value="0">
                 <IonLabel>Auto</IonLabel>
               </IonSegmentButton>
-              <IonSegmentButton value="NB-IoT">
+              <IonSegmentButton value="3">
                 <IonLabel>NB-IoT</IonLabel>
               </IonSegmentButton>
-              <IonSegmentButton value="Cat-M1">
+              <IonSegmentButton value="2">
                 <IonLabel>Cat-M1</IonLabel>
               </IonSegmentButton>
             </IonSegment>
@@ -101,14 +101,14 @@ const ConnectionSetting: React.FC<{
       <IonRow>
         <IonCol>
           <IonItem>
-            <IonSegment value={gsm} onIonChange={(e) => setGSM(e.detail.value!)}>
-              <IonSegmentButton value="AUTO">
+            <IonSegment value={band} onIonChange={(e) => setBand(e.detail.value!)}>
+              <IonSegmentButton value="F">
                 <IonLabel>Auto</IonLabel>
               </IonSegmentButton>
-              <IonSegmentButton value="900MHz">
+              <IonSegmentButton value="1">
                 <IonLabel>900MHz</IonLabel>
               </IonSegmentButton>
-              <IonSegmentButton value="1800MHz">
+              <IonSegmentButton value="2">
                 <IonLabel>1800MHz</IonLabel>
               </IonSegmentButton>
             </IonSegment>

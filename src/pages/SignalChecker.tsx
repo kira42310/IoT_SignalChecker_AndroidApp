@@ -117,7 +117,7 @@ const SignalChecker: React.FC = () => {
               <IonButton onClick={signalStrength} disabled={!isConnect}>Test</IonButton>
             </IonCol>
             <IonCol>
-              <IonButton onClick={signalTracker} >Test Tracking</IonButton>
+              <IonButton onClick={signalTracker} disabled={!isConnect}>Test Tracking</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>

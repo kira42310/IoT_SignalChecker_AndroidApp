@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, } from "@ionic/react"
-import { GoogleMap, LoadScript, Marker, MarkerClusterer } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow } from "@react-google-maps/api";
 import { useCurrentPosition } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 
@@ -9,7 +9,9 @@ const MapInterface: React.FC<{
 
   const { currentPosition, getPosition } = useCurrentPosition();
   const [ isMapLoaded, setIsMapLoaded ] = useState<boolean>(false);
-  const [ markers, setMarkers ] = useState<{lat:number, lng:number}[]>([]);
+  const [ markers, setMarkers ] = useState<{ latitude: number, longitude: number, rssi: number , _id: { $oid: string } }[]>([]);
+  const [ info, setInfo ] = useState<{ lat: number, lng: number, rssi: number }>();
+  const [ isInfo, setIsInfo ] = useState<boolean>(false);
 
   useEffect( () => {
     const fetchData = async () => {
@@ -17,12 +19,7 @@ const MapInterface: React.FC<{
         .then( response => response.json() )
         .then( data => 
           {  
-            var tmp = [];
-            for ( var i in data ) {
-              const marker = {lat: data[i].latitude, lng: data[i].longitude};
-              tmp.push(marker);
-            } 
-            setMarkers(tmp);
+            setMarkers(data);
           }
       );
     }
@@ -38,6 +35,12 @@ const MapInterface: React.FC<{
     lat: currentPosition?.coords.latitude,
     lng: currentPosition?.coords.longitude,
   }
+
+  const divStyle = {
+    background: `white`,
+    border: `1px solid #ccc`,
+    padding: 15
+  }
   
   const onMapLoad = async () => {
     // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
@@ -46,11 +49,15 @@ const MapInterface: React.FC<{
 
   const onScriptLoad = async () => {
     getPosition();
-    console.log( center );
   };
 
-  function createKey(location: { lat: number, lng: number }): React.ReactText {
-    return location.lat + location.lng
+  const infoWindowPanel = (lat: number, lng: number, rssi: number) => {
+    setInfo({lat:lat,lng:lng,rssi:rssi});
+    setIsInfo(true);
+  }
+
+  function createKey( id: string ): React.ReactText {
+    return id;
   }
 
   const renderMap = () =>
@@ -58,11 +65,19 @@ const MapInterface: React.FC<{
       <GoogleMap mapContainerStyle={containerStyle} zoom={14} onLoad={onMapLoad} center={center}>
         <MarkerClusterer>
           {
-            clusterer => markers.map( location => (
-              <Marker key={createKey(location)} position={location} clusterer={clusterer}/>
+            clusterer => markers.map( data => (
+              <Marker key={createKey(data._id.$oid)} position={{lat:data.latitude,lng:data.longitude}} clusterer={clusterer} onClick={e => infoWindowPanel(data.latitude,data.longitude,data.rssi)}>
+              </Marker>
             ))
           }
         </MarkerClusterer>
+        {
+          !isInfo || <InfoWindow position={{lat:info!.lat,lng:info!.lng}} onCloseClick={ () => setIsInfo(false)}>
+            <div style={divStyle}>
+              <IonLabel color="primary">{info!.rssi}</IonLabel>
+            </div>
+          </InfoWindow>
+        }
       </GoogleMap>
       <IonLoading isOpen={!isMapLoaded} />
       <IonLabel>Latitude: {currentPosition?.coords.latitude}{"\n"}Longitude: {currentPosition?.coords.longitude}</IonLabel>
