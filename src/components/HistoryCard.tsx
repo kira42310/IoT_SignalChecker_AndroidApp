@@ -3,7 +3,7 @@ import { IonCard, IonCardContent } from "@ionic/react";
 // import { AppSettings } from "../AppSettings"
 
 const HistoryCard: React.FC<{
-  immi: string,
+  imei: string,
   rssi: string,
   rsrp: string,
   sinr: string,
@@ -18,7 +18,7 @@ const HistoryCard: React.FC<{
   return (
     <IonCard>
       <IonCardContent>
-        <p>IMMI:{props.immi}</p>
+        <p>IMEI:{props.imei}</p>
         <p>RSSI:{props.rssi}</p>
         <p>RSRP:{props.rsrp}</p>
         <p>SINR:{props.sinr}</p>

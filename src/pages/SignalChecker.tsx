@@ -14,7 +14,7 @@ import {
   IonModal,
   IonButtons,
 } from "@ionic/react";
-import { useCurrentPosition } from "@ionic/react-hooks/geolocation";
+import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
 import ConnectionSetting from "../components/ConnectionSetting";
 import { AppSettings } from "../AppSettings";
 
@@ -23,7 +23,7 @@ const SignalChecker: React.FC = () => {
   const [ isConnect, setIsConnect ] = useState<boolean>(false);
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ errorConnection, setErrorConnection ] = useState<string>();
-  const [ immi, setIMMI ] = useState<string>();
+  const [ imei, setIMEI ] = useState<string>();
   const [ rssi, setRSSI ] = useState<string>();
   const [ rsrp, setRSRP ] = useState<string>();
   const [ sinr, setSINR ] = useState<string>();
@@ -32,40 +32,38 @@ const SignalChecker: React.FC = () => {
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
   const [ isTrack, setIsTrack ] = useState<boolean>(false);
   const [ trackHandler, setTrackHandler ] = useState<any>();
+  const [ positionAvailable ] = useState<boolean>(availableFeatures.watchPosition);
 
   const signalStrength = async () => {
-    const signalStrength = await fetch("http://" + rpiDestination + "/")
+    const signalStrength = await fetch("http://" + rpiDestination + "/signalStrength")
       .then((response) => response.json())
       .then((data) => { return data });
-    getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
-    setIMMI(signalStrength[0]);
-    setRSSI(signalStrength[1]);
-    setRSRP(signalStrength[2]);
-    setSINR(signalStrength[3]);
-    setRSRQ(signalStrength[4]);
-    const dbOption = {
-      method: "POST",
-      headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-      body: JSON.stringify({
-        immi: signalStrength[0],
-        rssi: signalStrength[1],
-        rsrp: signalStrength[2],
-        sinr: signalStrength[3],
-        rsrq: signalStrength[4],
-        pcid: signalStrength[5],
-        cellular: "NB-IoT",
-        gsm: "900MHz",
-        lte: "B8",
-        latitude: currentPosition?.coords.latitude,
-        longitude: currentPosition?.coords.longitude,
-      })
-    };
+    if(positionAvailable){
+      getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
+      const dbOption = {
+        method: "POST",
+        headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imei: imei,
+          rssi: signalStrength[0],
+          rsrp: signalStrength[1],
+          sinr: signalStrength[2],
+          rsrq: signalStrength[3],
+          pcid: signalStrength[4],
+          cellular: "NB-IoT",
+          gsm: "900MHz",
+          lte: "B8",
+          latitude: currentPosition?.coords.latitude,
+          longitude: currentPosition?.coords.longitude,
+        })
+      };
 
-    const result = await fetch(AppSettings.DB_LOCATION + "/insertdata", dbOption)
-      .then((response) => response.json())
-      .then((result) => { return result })
-      .catch(error => console.log(error));
-    console.log(result);
+      const result = await fetch(AppSettings.DB_LOCATION + "/insertdata", dbOption)
+        .then((response) => response.json())
+        .then((result) => { return result })
+        .catch(error => console.log(error));
+      console.log(result);
+    }
   };
 
   const signalTracker = () => {
@@ -110,7 +108,7 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol size="2"><IonLabel>IMMI:</IonLabel></IonCol>
-            <IonCol><IonLabel>{immi}</IonLabel></IonCol>
+            <IonCol><IonLabel>{imei}</IonLabel></IonCol>
           </IonRow>
           <IonRow>
             <IonCol>

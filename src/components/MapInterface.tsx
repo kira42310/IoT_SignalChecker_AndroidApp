@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, } from "@ionic/react"
 import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow } from "@react-google-maps/api";
-import { useCurrentPosition } from "@ionic/react-hooks/geolocation";
+import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 
-const MapInterface: React.FC<{
-}> = (props) => {
+const MapInterface: React.FC<{}> = (props) => {
 
   const { currentPosition, getPosition } = useCurrentPosition();
-  const [ isMapLoaded, setIsMapLoaded ] = useState<boolean>(false);
+  const [ isMapLoaded, setIsMapLoaded ] = useState< boolean >( false );
   const [ markers, setMarkers ] = useState<{ latitude: number, longitude: number, rssi: number , _id: { $oid: string } }[]>([]);
   const [ info, setInfo ] = useState<{ lat: number, lng: number, rssi: number }>();
-  const [ isInfo, setIsInfo ] = useState<boolean>(false);
+  const [ isInfo, setIsInfo ] = useState< boolean >( false );
+  const [ center, setCenter ] = useState<{ lat: number, lng: number }>();
 
   useEffect( () => {
     const fetchData = async () => {
@@ -31,11 +31,6 @@ const MapInterface: React.FC<{
     height: '80%',
   }
 
-  const center = {
-    lat: currentPosition?.coords.latitude,
-    lng: currentPosition?.coords.longitude,
-  }
-
   const divStyle = {
     background: `white`,
     border: `1px solid #ccc`,
@@ -44,16 +39,22 @@ const MapInterface: React.FC<{
   
   const onMapLoad = async () => {
     // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
-    setIsMapLoaded(true);
+    setIsMapLoaded( true );
   };
 
   const onScriptLoad = async () => {
-    getPosition();
+    if(availableFeatures.watchPosition){
+      getPosition();
+      setCenter({ lat: currentPosition?.coords.latitude!, lng: currentPosition?.coords.longitude! });
+    }
+    else{
+      setCenter({ lat: 13.7625293, lng: 100.5655906 }); //TRUE Building
+    }
   };
 
-  const infoWindowPanel = (lat: number, lng: number, rssi: number) => {
-    setInfo({lat:lat,lng:lng,rssi:rssi});
-    setIsInfo(true);
+  const infoWindowPanel = ( lat: number, lng: number, rssi: number ) => {
+    setInfo({ lat: lat, lng: lng, rssi: rssi });
+    setIsInfo( true );
   }
 
   function createKey( id: string ): React.ReactText {

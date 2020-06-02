@@ -9,7 +9,6 @@ import {
 import MapInterface from "../components/MapInterface";
 // import { AppSettings } from "../AppSettings";
 
-
 const MapInfo: React.FC = () => {
 
   return (

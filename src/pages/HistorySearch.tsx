@@ -50,7 +50,7 @@ const HistorySearch: React.FC = () => {
         {
           data.map( info => (
             <HistoryCard key={createKey(info._id.$oid)}
-              immi={info.immi}
+              imei={info.immi}
               rssi={info.rssi}
               rsrp={info.rsrp}
               sinr={info.sinr}
