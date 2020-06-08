@@ -81,7 +81,6 @@ const MapInterface: React.FC<{}> = (props) => {
         }
       </GoogleMap>
       <IonLoading isOpen={!isMapLoaded} />
-      <IonLabel>Latitude: {currentPosition?.coords.latitude}{"\n"}Longitude: {currentPosition?.coords.longitude}</IonLabel>
     </LoadScript>
 
   return renderMap();

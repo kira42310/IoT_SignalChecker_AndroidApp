@@ -12,25 +12,24 @@ import { AppSettings } from "../AppSettings";
 const HistorySearch: React.FC = () => {
 
   const [ data, setData ] = useState<{ 
-    immi: string, 
+    imei: string, 
     rssi: string, 
     rsrp: string, 
     sinr: string, 
     rsrq: string, 
     pcid: string, 
-    cellular: string, 
-    gsm: string, 
+    mode: string,
     latitude: number, 
     longitude: number, 
     _id: { $oid: string },
-    date: { $date: Date}
+    date: { $date: Date }
   }[]>([]);
 
   useEffect( () => {
     const loadData = async () => {
       const result = await fetch(AppSettings.DB_LOCATION+"")
-        .then( Response => Response.json())
-        .then( data => setData(data))
+        .then( Response => Response.json() )
+        .then( data => setData(data) )
       };
     loadData();
   },[]);
@@ -50,14 +49,14 @@ const HistorySearch: React.FC = () => {
         {
           data.map( info => (
             <HistoryCard key={createKey(info._id.$oid)}
-              imei={info.immi}
+              imei={info.imei}
               rssi={info.rssi}
               rsrp={info.rsrp}
               sinr={info.sinr}
               rsrq={info.rsrq}
               pcid={info.pcid}
-              mode={info.cellular}
-              band={info.gsm}
+              mode={info.mode}
+              date={info.date.$date}
               lat={info.latitude}
               lng={info.longitude}
             />

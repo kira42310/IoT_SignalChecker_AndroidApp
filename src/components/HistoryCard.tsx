@@ -10,10 +10,16 @@ const HistoryCard: React.FC<{
   rsrq: string,
   pcid: string,
   mode: string,
-  band: string,
+  date: Date,
   lat: number,
   lng: number
 }> = (props) => {
+
+  const timestampConverter = () => {
+    const rawData = new Date(props.date);
+    console.log(rawData);
+    console.log(rawData.getHours());
+  };
 
   return (
     <IonCard>
@@ -25,7 +31,7 @@ const HistoryCard: React.FC<{
         <p>RSRQ:{props.rsrq}</p>
         <p>PCID:{props.pcid}</p>
         <p>Mode:{props.mode}</p>
-        <p>Band:{props.band}</p>
+        <p>Date:{timestampConverter()}</p>
         <p>Latitude:{props.lat}</p>
         <p>Longitude:{props.lng}</p>
       </IonCardContent>

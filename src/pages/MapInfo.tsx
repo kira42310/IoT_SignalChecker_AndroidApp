@@ -1,15 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
     IonPage, 
     IonHeader, 
     IonToolbar, 
     IonTitle,
-    IonContent, 
+    IonContent,
+    IonAlert, 
 } from "@ionic/react";
+import { availableFeatures } from "@ionic/react-hooks/geolocation"
 import MapInterface from "../components/MapInterface";
-// import { AppSettings } from "../AppSettings";
 
 const MapInfo: React.FC = () => {
+
+  const [ error, setError ] = useState<string>();
+
+  useEffect( () => {
+    if(!availableFeatures.watchPosition){
+      setError("Geolocation service is not available.")
+    };
+  },[]);
+
+  const clearError = () => {
+    setError("")
+  };
 
   return (
     <IonPage>
@@ -21,6 +34,7 @@ const MapInfo: React.FC = () => {
       <IonContent>
         <MapInterface />
       </IonContent>
+      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError}]} />
     </IonPage>
   );
 };
