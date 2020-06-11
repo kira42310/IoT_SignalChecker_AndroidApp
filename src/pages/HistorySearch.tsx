@@ -27,7 +27,7 @@ const HistorySearch: React.FC = () => {
 
   useEffect( () => {
     const loadData = async () => {
-      const result = await fetch(AppSettings.DB_LOCATION+"")
+      await fetch(AppSettings.DB_LOCATION+"")
         .then( Response => Response.json() )
         .then( data => setData(data) )
       };

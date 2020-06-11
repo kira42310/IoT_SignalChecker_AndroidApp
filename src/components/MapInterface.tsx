@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, } from "@ionic/react"
-import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow, GoogleMapProps } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow } from "@react-google-maps/api";
 import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 

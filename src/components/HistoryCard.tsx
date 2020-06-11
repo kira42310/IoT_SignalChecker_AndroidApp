@@ -17,8 +17,13 @@ const HistoryCard: React.FC<{
 
   const timestampConverter = () => {
     const rawData = new Date(props.date);
-    console.log(rawData);
-    console.log(rawData.getHours());
+    return (
+      rawData.getDate()+"/"
+      +rawData.getMonth()+"/"
+      +rawData.getFullYear()+" "
+      +("0"+rawData.getHours()).substr(-2)+":"
+      +("0"+rawData.getMinutes()).substr(-2)
+    );
   };
 
   return (
