@@ -97,7 +97,7 @@ const SignalChecker: React.FC = () => {
     else{
       setIsTrack(true);
       setEnableBTN(false);
-      const trackerHandler = setInterval( () => {signalStrength()}, delay);
+      const trackerHandler = setInterval( () => {signalStrength()}, delay*1000);
       setTrackHandler(trackerHandler);
     }
   };
