@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, } from "@ionic/react"
-import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow, GoogleMapProps } from "@react-google-maps/api";
 import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 
@@ -12,19 +12,15 @@ const MapInterface: React.FC<{}> = (props) => {
   const [ info, setInfo ] = useState<{ lat: number, lng: number, rssi: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
   const [ center, setCenter ] = useState<{ lat: number, lng: number }>();
+  const [ mapOBJ, setMapOBJ ] = useState<google.maps.Map>();
+  const [ mapBound, setMapBound ] = useState<google.maps.LatLngBounds>();
 
   useEffect( () => {
-    const fetchData = async () => {
-      await fetch(AppSettings.DB_LOCATION+'')
-        .then( response => response.json() )
-        .then( data => 
-          {  
-            setMarkers(data);
-          }
-      );
-    }
-    fetchData();
-  }, []);
+    const reloadMarker = async () => {
+      console.log(mapBound);
+    };
+    reloadMarker();
+  }, [mapBound]);
 
   const containerStyle = {
     width: '100%',
@@ -37,19 +33,34 @@ const MapInterface: React.FC<{}> = (props) => {
     padding: 15
   }
   
-  const onMapLoad = async () => {
-    // getPosition({ enableHighAccuracy:AppSettings.GPS_HIGH_ACCURACY, timeout: 30000 });
+  const onMapLoad = async (map: google.maps.Map) => {
     setIsMapLoaded( true );
+    setMapOBJ(map);
   };
 
+  // const loadMarker = (marker: google.maps.Marker) => {
+  //   console.log(marker);
+  // };
+
   const onScriptLoad = async () => {
+    await fetch(AppSettings.DB_LOCATION+'')
+      .then( response => response.json() )
+      .then( data => 
+        {  
+          setMarkers(data);
+        }
+    );
     if(availableFeatures.watchPosition){
-      getPosition();
+      getPosition({ timeout: 15000 });
       setCenter({ lat: currentPosition?.coords.latitude!, lng: currentPosition?.coords.longitude! });
     }
     else{
       setCenter({ lat: 13.7625293, lng: 100.5655906 }); //TRUE Building
     }
+  };
+
+  const boundChange = () => {
+    setMapBound(mapOBJ?.getBounds()!);
   };
 
   const infoWindowPanel = ( lat: number, lng: number, rssi: number ) => {
@@ -63,12 +74,15 @@ const MapInterface: React.FC<{}> = (props) => {
 
   const renderMap = () =>
     <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} onLoad={onScriptLoad}>
-      <GoogleMap mapContainerStyle={containerStyle} zoom={14} onLoad={onMapLoad} center={center}>
+      <GoogleMap mapContainerStyle={containerStyle} zoom={14} onLoad={onMapLoad} center={center} onDragEnd={boundChange}>
         <MarkerClusterer>
           {
             clusterer => markers.map( data => (
-              <Marker key={createKey(data._id.$oid)} position={{lat:data.latitude,lng:data.longitude}} clusterer={clusterer} onClick={e => infoWindowPanel(data.latitude,data.longitude,data.rssi)}>
-              </Marker>
+              <Marker key={createKey(data._id.$oid)} 
+                position={{lat:data.latitude,lng:data.longitude}} 
+                onClick={e => infoWindowPanel(data.latitude,data.longitude,data.rssi)} 
+                options={{ icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }}
+              />
             ))
           }
         </MarkerClusterer>

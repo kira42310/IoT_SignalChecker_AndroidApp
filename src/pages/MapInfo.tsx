@@ -5,7 +5,10 @@ import {
     IonToolbar, 
     IonTitle,
     IonContent,
-    IonAlert, 
+    IonAlert,
+    IonSelect,
+    IonSelectOption,
+    IonCard, 
 } from "@ionic/react";
 import { availableFeatures } from "@ionic/react-hooks/geolocation"
 import MapInterface from "../components/MapInterface";
@@ -33,6 +36,14 @@ const MapInfo: React.FC = () => {
       </IonHeader>
       <IonContent>
         <MapInterface />
+        <IonCard>
+          <IonSelect value="rssi" interface="action-sheet">
+            <IonSelectOption value="rssi">RSSI</IonSelectOption>
+            <IonSelectOption value="rsrp">RSRP</IonSelectOption>
+            <IonSelectOption value="sinr">SINR</IonSelectOption>
+            <IonSelectOption value="rsrq">RSRQ</IonSelectOption>
+          </IonSelect>
+        </IonCard>
       </IonContent>
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError}]} />
     </IonPage>
