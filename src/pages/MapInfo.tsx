@@ -16,6 +16,7 @@ import MapInterface from "../components/MapInterface";
 const MapInfo: React.FC = () => {
 
   const [ error, setError ] = useState<string>();
+  const [ showValue, setShowValue ] = useState< "rssi" | "rsrp" | "sinr" | "rsrq" >("rssi");
 
   useEffect( () => {
     if(!availableFeatures.watchPosition){
@@ -35,9 +36,9 @@ const MapInfo: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent>
-        <MapInterface />
+        <MapInterface showValue={showValue} />
         <IonCard>
-          <IonSelect value="rssi" interface="action-sheet">
+          <IonSelect value={showValue} interface="action-sheet" onIonChange={ e => setShowValue(e.detail.value) }>
             <IonSelectOption value="rssi">RSSI</IonSelectOption>
             <IonSelectOption value="rsrp">RSRP</IonSelectOption>
             <IonSelectOption value="sinr">SINR</IonSelectOption>

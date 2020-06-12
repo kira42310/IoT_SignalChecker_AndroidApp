@@ -1,23 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, } from "@ionic/react"
-import { GoogleMap, LoadScript, Marker, MarkerClusterer, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, InfoWindow, useGoogleMap } from "@react-google-maps/api";
 import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 
-const MapInterface: React.FC<{}> = (props) => {
+const MapInterface: React.FC<{
+  showValue: "rssi" | "rsrp" | "sinr" | "rsrq",
+}> = (props) => {
 
   const { currentPosition, getPosition } = useCurrentPosition();
   const [ isMapLoaded, setIsMapLoaded ] = useState< boolean >( false );
-  const [ markers, setMarkers ] = useState<{ latitude: number, longitude: number, rssi: number , _id: { $oid: string } }[]>([]);
-  const [ info, setInfo ] = useState<{ lat: number, lng: number, rssi: number }>();
+  const [ info, setInfo ] = useState<{ lat: number, lng: number, data: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
   const [ center, setCenter ] = useState<{ lat: number, lng: number }>();
-  const [ mapOBJ, setMapOBJ ] = useState<google.maps.Map>();
-  const [ mapBound, setMapBound ] = useState<google.maps.LatLngBounds>();
+  // const [ mapOBJ, setMapOBJ ] = useState<google.maps.Map>();
+  const map = useGoogleMap();
+  // const [ mapBound, setMapBound ] = useState<google.maps.LatLngBounds>();
+  const [ mapBound, setMapBound ] = useState();
+  const [ markers, setMarkers ] = useState<{ 
+    latitude: number, 
+    longitude: number, 
+    rssi: number, 
+    rsrp: number,
+    sinr: number,
+    rsrq: number,
+    _id: { $oid: string } 
+  }[]>([]);
 
   useEffect( () => {
     const reloadMarker = async () => {
       console.log(mapBound);
+      // console.log(map?.getBounds);
     };
     reloadMarker();
   }, [mapBound]);
@@ -33,14 +46,10 @@ const MapInterface: React.FC<{}> = (props) => {
     padding: 15
   }
   
-  const onMapLoad = async (map: google.maps.Map) => {
+  const onMapLoad = async ( map: google.maps.Map ) => {
     setIsMapLoaded( true );
-    setMapOBJ(map);
+    // setMapOBJ(map);
   };
-
-  // const loadMarker = (marker: google.maps.Marker) => {
-  //   console.log(marker);
-  // };
 
   const onScriptLoad = async () => {
     await fetch(AppSettings.DB_LOCATION+'')
@@ -51,7 +60,7 @@ const MapInterface: React.FC<{}> = (props) => {
         }
     );
     if(availableFeatures.watchPosition){
-      getPosition({ timeout: 15000 });
+      getPosition({ timeout: 30000 });
       setCenter({ lat: currentPosition?.coords.latitude!, lng: currentPosition?.coords.longitude! });
     }
     else{
@@ -60,41 +69,91 @@ const MapInterface: React.FC<{}> = (props) => {
   };
 
   const boundChange = () => {
-    setMapBound(mapOBJ?.getBounds()!);
+    // setMapBound(mapOBJ?.getBounds()!);
+    setMapBound(map.getBounds);
   };
 
-  const infoWindowPanel = ( lat: number, lng: number, rssi: number ) => {
-    setInfo({ lat: lat, lng: lng, rssi: rssi });
-    setIsInfo( true );
+  const convertDataToIcon = ( data: number ) => {
+    if( props.showValue.toString() == "rssi" || props.showValue.toString() == "rsrp" ) return createPinSymbol(colorRssiRsrp(data));
+    else if( props.showValue == "sinr" ) return createPinSymbol(colorSinr(data));
+    else if( props.showValue == "rsrq" ) return createPinSymbol(colorRsrq(data));
+    else return createPinSymbol("black");
+  };
+
+  function createPinSymbol( color: string ) {
+    return {
+      path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: '#000',
+      strokeWeight: 2,
+      scale: 1
+    };
   }
 
-  function createKey( id: string ): React.ReactText {
-    return id;
-  }
+  const colorRssiRsrp = ( data: number ) => {
+    if( data >= -80 ) return "blue"
+    else if( data < -80 && data >= -90 ) return "aqua"
+    else if( data < -90 && data >= -95 ) return "darkgreen"
+    else if( data < -95 && data >= -100 ) return "greenyellow"
+    else if( data < -100 && data >= -110 ) return "yellow"
+    else if( data < -110 && data >= -116 ) return "red"
+    else if( data < -116 && data >= -124 ) return "grey"
+    else if( data < -124 ) return "darkblue"
+    else return "black"
+  };
+
+  const colorSinr = ( data: number ) => {
+    if( data >= 20 ) return "purple"
+    if( data < 20 && data >= 15 ) return "hotpink"
+    if( data < 15 && data >= 10 ) return "goldenrod"
+    if( data < 10 && data >= 5 ) return "cornflowerblue"
+    if( data < 5 && data >= 0 ) return "orchid"
+    if( data < 0 ) return "gray"
+    else return "black"
+  };
+
+  const colorRsrq = ( data: number ) => {
+    if( data >= -6 ) return "purple"
+    if( data < -6 && data >= -9 ) return "hotpink"
+    if( data < -9 && data >= -11 ) return "cornflowerblue"
+    if( data < -11 && data >= -14 ) return "orchid"
+    if( data < -14 ) return "gray"
+    else return "black"
+  };
+
+  const infoWindowPanel = ( lat: number, lng: number, data: number ) => {
+    setInfo({ lat: lat, lng: lng, data: data });
+    setIsInfo( true );
+  };
+
+  // Function for accessing value in the object by using variable
+  function getProperty< T, K extends keyof T >( o: T, propertyName: K ): T[K] {
+    return o[ propertyName ];
+  };
 
   const renderMap = () =>
     <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} onLoad={onScriptLoad}>
       <GoogleMap mapContainerStyle={containerStyle} zoom={14} onLoad={onMapLoad} center={center} onDragEnd={boundChange}>
-        <MarkerClusterer>
-          {
-            clusterer => markers.map( data => (
-              <Marker key={createKey(data._id.$oid)} 
-                position={{lat:data.latitude,lng:data.longitude}} 
-                onClick={e => infoWindowPanel(data.latitude,data.longitude,data.rssi)} 
-                options={{ icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" }}
-              />
-            ))
-          }
-        </MarkerClusterer>
+        {
+          markers.map( data => (
+            <Marker key={data._id.$oid} 
+              position={{ lat: data.latitude, lng: data.longitude }} 
+              onClick={e => infoWindowPanel( data.latitude, data.longitude, getProperty( data, props.showValue ))} 
+              // options={{ icon: convertDataToIcon(getProperty( data, props.showValue )) }}
+              options={{ icon: convertDataToIcon(data[props.showValue]) }}
+            />
+          ))
+        }
         {
           !isInfo || <InfoWindow position={{lat:info!.lat,lng:info!.lng}} onCloseClick={ () => setIsInfo(false)}>
             <div style={divStyle}>
-              <IonLabel color="primary">{info!.rssi}</IonLabel>
+              <IonLabel color="primary">{info!.data}</IonLabel>
             </div>
           </InfoWindow>
         }
       </GoogleMap>
-      <IonLoading isOpen={!isMapLoaded} />
+      <IonLoading isOpen={!isMapLoaded} message={'Please Wait...'} backdropDismiss={true} />
     </LoadScript>
 
   return renderMap();
