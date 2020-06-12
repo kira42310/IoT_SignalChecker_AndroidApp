@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, } from "@ionic/react"
-import { GoogleMap, LoadScript, Marker, InfoWindow, useGoogleMap } from "@react-google-maps/api";
+import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 
@@ -9,14 +9,13 @@ const MapInterface: React.FC<{
 }> = (props) => {
 
   const { currentPosition, getPosition } = useCurrentPosition();
-  const [ isMapLoaded, setIsMapLoaded ] = useState< boolean >( false );
+  // const [ isMapLoaded, setIsMapLoaded ] = useState< boolean >( false );
+  const [ isLoaded, setIsLoaded ] = useState< boolean >( false );
   const [ info, setInfo ] = useState<{ lat: number, lng: number, data: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
-  const [ center, setCenter ] = useState<{ lat: number, lng: number }>();
-  // const [ mapOBJ, setMapOBJ ] = useState<google.maps.Map>();
-  const map = useGoogleMap();
-  // const [ mapBound, setMapBound ] = useState<google.maps.LatLngBounds>();
-  const [ mapBound, setMapBound ] = useState();
+  const [ center, setCenter ] = useState< google.maps.LatLng >();
+  const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
+  const [ mapBound, setMapBound ] = useState< google.maps.LatLngBounds >();
   const [ markers, setMarkers ] = useState<{ 
     latitude: number, 
     longitude: number, 
@@ -29,11 +28,16 @@ const MapInterface: React.FC<{
 
   useEffect( () => {
     const reloadMarker = async () => {
-      console.log(mapBound);
-      // console.log(map?.getBounds);
+      if( !mapBound ) console.log("lololol");
+      if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
+      // console.log(mapBound?.getNorthEast().lat());
     };
     reloadMarker();
-  }, [mapBound]);
+  }, [ mapBound ]);
+
+  useEffect( () => {
+    setIsInfo(false);
+  }, [ props.showValue ]);
 
   const containerStyle = {
     width: '100%',
@@ -43,40 +47,40 @@ const MapInterface: React.FC<{
   const divStyle = {
     background: `white`,
     border: `1px solid #ccc`,
-    padding: 15
+    padding: 7
   }
   
   const onMapLoad = async ( map: google.maps.Map ) => {
-    setIsMapLoaded( true );
-    // setMapOBJ(map);
+    // setIsMapLoaded( true );
+    setMapOBJ( map );
+    setIsLoaded( true );
   };
 
   const onScriptLoad = async () => {
-    await fetch(AppSettings.DB_LOCATION+'')
+    await fetch( AppSettings.DB_LOCATION + '' )
       .then( response => response.json() )
       .then( data => 
         {  
           setMarkers(data);
         }
     );
-    if(availableFeatures.watchPosition){
+    if( availableFeatures.watchPosition ){
       getPosition({ timeout: 30000 });
-      setCenter({ lat: currentPosition?.coords.latitude!, lng: currentPosition?.coords.longitude! });
+      setCenter( new google.maps.LatLng( currentPosition?.coords.latitude!, currentPosition?.coords.longitude! ));
     }
     else{
-      setCenter({ lat: 13.7625293, lng: 100.5655906 }); //TRUE Building
+      setCenter( new google.maps.LatLng( { lat: 13.7625293, lng: 100.5655906 })); //TRUE Building
     }
   };
 
   const boundChange = () => {
-    // setMapBound(mapOBJ?.getBounds()!);
-    setMapBound(map.getBounds);
+    setMapBound( mapOBJ?.getBounds()! );
   };
 
   const convertDataToIcon = ( data: number ) => {
-    if( props.showValue.toString() == "rssi" || props.showValue.toString() == "rsrp" ) return createPinSymbol(colorRssiRsrp(data));
-    else if( props.showValue == "sinr" ) return createPinSymbol(colorSinr(data));
-    else if( props.showValue == "rsrq" ) return createPinSymbol(colorRsrq(data));
+    if( props.showValue === "rssi" || props.showValue === "rsrp" ) return createPinSymbol( colorRssiRsrp(data) );
+    else if( props.showValue === "sinr" ) return createPinSymbol( colorSinr(data) );
+    else if( props.showValue === "rsrq" ) return createPinSymbol( colorRsrq(data) );
     else return createPinSymbol("black");
   };
 
@@ -127,33 +131,31 @@ const MapInterface: React.FC<{
     setIsInfo( true );
   };
 
-  // Function for accessing value in the object by using variable
-  function getProperty< T, K extends keyof T >( o: T, propertyName: K ): T[K] {
-    return o[ propertyName ];
-  };
-
   const renderMap = () =>
-    <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} onLoad={onScriptLoad}>
-      <GoogleMap mapContainerStyle={containerStyle} zoom={14} onLoad={onMapLoad} center={center} onDragEnd={boundChange}>
+    <LoadScript googleMapsApiKey={ AppSettings.GOOGLE_API_KEY } onLoad={ onScriptLoad }>
+      <GoogleMap mapContainerStyle={ containerStyle } 
+        zoom={ 14 } 
+        onLoad={ onMapLoad } 
+        center={ center } 
+        onDragEnd={ boundChange }>
         {
           markers.map( data => (
-            <Marker key={data._id.$oid} 
+            <Marker key={ data._id.$oid } 
               position={{ lat: data.latitude, lng: data.longitude }} 
-              onClick={e => infoWindowPanel( data.latitude, data.longitude, getProperty( data, props.showValue ))} 
-              // options={{ icon: convertDataToIcon(getProperty( data, props.showValue )) }}
-              options={{ icon: convertDataToIcon(data[props.showValue]) }}
+              onClick={ e => infoWindowPanel( data.latitude, data.longitude, data[props.showValue] )} 
+              options={{ icon: convertDataToIcon( data[props.showValue] ) }}
             />
           ))
         }
         {
-          !isInfo || <InfoWindow position={{lat:info!.lat,lng:info!.lng}} onCloseClick={ () => setIsInfo(false)}>
-            <div style={divStyle}>
-              <IonLabel color="primary">{info!.data}</IonLabel>
+          !isInfo || <InfoWindow position={{ lat: info!.lat, lng: info!.lng }} onCloseClick={ () => setIsInfo(false) }>
+            <div style={ divStyle }>
+              <IonLabel color="primary">{ info!.data }</IonLabel>
             </div>
           </InfoWindow>
         }
       </GoogleMap>
-      <IonLoading isOpen={!isMapLoaded} message={'Please Wait...'} backdropDismiss={true} />
+      <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
     </LoadScript>
 
   return renderMap();
