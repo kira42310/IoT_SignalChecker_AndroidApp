@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { IonLoading, IonLabel, } from "@ionic/react"
+import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, } from "@ionic/react"
 import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
-import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
+import { useCurrentPosition, availableFeatures, } from "@ionic/react-hooks/geolocation";
 import { AppSettings } from "../AppSettings";
 
 const MapInterface: React.FC<{
@@ -13,7 +13,7 @@ const MapInterface: React.FC<{
   const [ isLoaded, setIsLoaded ] = useState< boolean >( false );
   const [ info, setInfo ] = useState<{ lat: number, lng: number, data: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
-  const [ center, setCenter ] = useState< google.maps.LatLng >();
+  const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( { lat: 13.7625293, lng: 100.5655906 } )); //Default: True Building
   const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
   const [ mapBound, setMapBound ] = useState< google.maps.LatLngBounds >();
   const [ markers, setMarkers ] = useState<{ 
@@ -25,6 +25,25 @@ const MapInterface: React.FC<{
     rsrq: number,
     _id: { $oid: string } 
   }[]>([]);
+
+  useIonViewWillEnter( () => {
+    if( availableFeatures.watchPosition ){
+      getPosition({ timeout: 30000, enableHighAccuracy: false });
+    }
+  });
+
+  useIonViewDidEnter( () => {
+    const loadData = async () => {
+      await fetch( AppSettings.DB_LOCATION + '' )
+        .then( response => response.json() )
+        .then( data => 
+          {  
+            setMarkers(data);
+          }
+      );
+    }
+    loadData();
+  });
 
   useEffect( () => {
     const reloadMarker = async () => {
@@ -56,22 +75,22 @@ const MapInterface: React.FC<{
     setIsLoaded( true );
   };
 
-  const onScriptLoad = async () => {
-    await fetch( AppSettings.DB_LOCATION + '' )
-      .then( response => response.json() )
-      .then( data => 
-        {  
-          setMarkers(data);
-        }
-    );
-    if( availableFeatures.watchPosition ){
-      getPosition({ timeout: 30000 });
-      setCenter( new google.maps.LatLng( currentPosition?.coords.latitude!, currentPosition?.coords.longitude! ));
-    }
-    else{
-      setCenter( new google.maps.LatLng( { lat: 13.7625293, lng: 100.5655906 })); //TRUE Building
-    }
-  };
+  // const onScriptLoad = async () => {
+  //   await fetch( AppSettings.DB_LOCATION + '' )
+  //     .then( response => response.json() )
+  //     .then( data => 
+  //       {  
+  //         setMarkers(data);
+  //       }
+  //   );
+  //   if( availableFeatures.watchPosition ){
+  //     getPosition({ timeout: 30000 });
+  //     setCenter( new google.maps.LatLng( currentPosition?.coords.latitude!, currentPosition?.coords.longitude! ));
+  //   }
+  //   else{
+  //     setCenter( new google.maps.LatLng( { lat: 13.7625293, lng: 100.5655906 })); //TRUE Building
+  //   }
+  // };
 
   const boundChange = () => {
     setMapBound( mapOBJ?.getBounds()! );
@@ -131,12 +150,12 @@ const MapInterface: React.FC<{
     setIsInfo( true );
   };
 
-  const renderMap = () =>
-    <LoadScript googleMapsApiKey={ AppSettings.GOOGLE_API_KEY } onLoad={ onScriptLoad }>
+  const renderMap = () => (
+    // <LoadScript googleMapsApiKey={ AppSettings.GOOGLE_API_KEY } onLoad={ onScriptLoad }>
       <GoogleMap mapContainerStyle={ containerStyle } 
         zoom={ 14 } 
         onLoad={ onMapLoad } 
-        center={ center } 
+        center={ availableFeatures.watchPosition? new google.maps.LatLng( currentPosition?.coords.latitude!, currentPosition?.coords.longitude!): center } 
         onDragEnd={ boundChange }>
         {
           markers.map( data => (
@@ -154,9 +173,10 @@ const MapInterface: React.FC<{
             </div>
           </InfoWindow>
         }
-      </GoogleMap>
       <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
-    </LoadScript>
+      </GoogleMap>
+    // </LoadScript>
+  );
 
   return renderMap();
 };

@@ -1,5 +1,6 @@
 import React from "react";
-import { IonCard, IonCardContent } from "@ionic/react";
+import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from "@ionic/react";
+import MapCustomView from "./MapCustomView";
 // import { AppSettings } from "../AppSettings"
 
 const HistoryCard: React.FC<{
@@ -29,16 +30,33 @@ const HistoryCard: React.FC<{
   return (
     <IonCard>
       <IonCardContent>
-        <p>IMEI:{props.imei}</p>
-        <p>RSSI:{props.rssi}</p>
-        <p>RSRP:{props.rsrp}</p>
-        <p>SINR:{props.sinr}</p>
-        <p>RSRQ:{props.rsrq}</p>
-        <p>PCID:{props.pcid}</p>
-        <p>Mode:{props.mode}</p>
-        <p>Date:{timestampConverter()}</p>
-        <p>Latitude:{props.lat}</p>
-        <p>Longitude:{props.lng}</p>
+        <IonGrid>
+          <IonRow>
+            <IonCol size="4">
+              <MapCustomView latitude={ props.lat } longtitude={ props.lng } />
+            </IonCol>
+            <IonCol>
+              <p>Date</p>
+              <p>IMEI</p>
+              <p>Mode</p>
+              <p>RSSI</p>
+              <p>RSRP</p>
+              <p>SINR</p>
+              <p>RSRQ</p>
+              <p>PCID</p>
+            </IonCol>
+            <IonCol>
+              <p>{timestampConverter()}</p>
+              <p>{props.imei}</p>
+              <p>{props.mode}</p>
+              <p>{props.rssi}</p>
+              <p>{props.rsrp}</p>
+              <p>{props.sinr}</p>
+              <p>{props.rsrq}</p>
+              <p>{props.pcid}</p>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </IonCardContent>
     </IonCard>    
   );

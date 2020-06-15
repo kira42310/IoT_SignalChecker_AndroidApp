@@ -166,7 +166,31 @@ const SignalChecker: React.FC = () => {
               </IonItem>
             </IonCol>
           </IonRow>
-          <IonCard>
+          <IonRow>
+            <IonCol size="6">
+              <IonCard>
+                <IonCardContent>RSSI:{ !rssi? "00": rssi }</IonCardContent>
+              </IonCard>
+            </IonCol>
+            <IonCol size="6">
+              <IonCard>
+                <IonCardContent>RSRP:{ !rsrp? "00": rsrp }</IonCardContent>
+              </IonCard>
+            </IonCol>
+          </IonRow>
+          <IonRow>
+            <IonCol size="6">
+              <IonCard>
+                <IonCardContent>SINR:{ !sinr? "00": sinr }</IonCardContent>
+              </IonCard>
+            </IonCol>
+            <IonCol size="6">
+              <IonCard>
+                <IonCardContent>RSRQ:{ !rsrq? "00": rsrq }</IonCardContent>
+              </IonCard>
+            </IonCol>
+          </IonRow>
+          {/* <IonCard>
             <IonCardContent>
               <IonRow>
                 <IonCol size="3"><IonLabel>RSSI:</IonLabel>{rssi}</IonCol>
@@ -175,7 +199,7 @@ const SignalChecker: React.FC = () => {
                 <IonCol size="3"><IonLabel>RSRQ:</IonLabel>{rsrq}</IonCol>
               </IonRow>
             </IonCardContent>
-          </IonCard>
+          </IonCard> */}
         </IonGrid>
       </IonContent>
       <IonModal isOpen={connectionWindow}>

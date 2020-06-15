@@ -9,12 +9,13 @@ import {
 } from "@ionic/react";
 import { IonReactRouter, } from "@ionic/react-router";
 import { Route, } from "react-router-dom";
+import { LoadScript } from "@react-google-maps/api";
 
 /* Pages and components */
 import SignalChecker from "./pages/SignalChecker";
 import MapInfo from "./pages/MapInfo";
 import HistorySearch from "./pages/HistorySearch";
-// import { AppSettings } from "./AppSettings"
+import { AppSettings } from "./AppSettings"
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -61,6 +62,7 @@ const App: React.FC = () => {
           </IonTabs>
         </IonReactRouter>
       </IonApp>
+      <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} />
     </React.Fragment>
   );
 };
