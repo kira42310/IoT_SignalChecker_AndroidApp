@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, } from "@ionic/react"
 import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
-import { useCurrentPosition, availableFeatures, } from "@ionic/react-hooks/geolocation";
+import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
+
+const { Geolocation } = Plugins;
 
 const MapInterface: React.FC<{
   showValue: "rssi" | "rsrp" | "sinr" | "rsrq",
 }> = (props) => {
 
-  const { currentPosition, getPosition } = useCurrentPosition();
   // const [ isMapLoaded, setIsMapLoaded ] = useState< boolean >( false );
   const [ isLoaded, setIsLoaded ] = useState< boolean >( false );
   const [ info, setInfo ] = useState<{ lat: number, lng: number, data: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
-  const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( { lat: 13.7625293, lng: 100.5655906 } )); //Default: True Building
+  const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
   const [ mapBound, setMapBound ] = useState< google.maps.LatLngBounds >();
   const [ markers, setMarkers ] = useState<{ 
@@ -27,9 +28,11 @@ const MapInterface: React.FC<{
   }[]>([]);
 
   useIonViewWillEnter( () => {
-    if( availableFeatures.watchPosition ){
-      getPosition({ timeout: 30000, enableHighAccuracy: false });
-    }
+    const getLocation = async () => {
+      const tmp = await Geolocation.getCurrentPosition();
+      setCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+    };
+    getLocation()
   });
 
   useIonViewDidEnter( () => {
@@ -43,6 +46,7 @@ const MapInterface: React.FC<{
       );
     }
     loadData();
+    setIsLoaded( true );
   });
 
   useEffect( () => {
@@ -72,7 +76,6 @@ const MapInterface: React.FC<{
   const onMapLoad = async ( map: google.maps.Map ) => {
     // setIsMapLoaded( true );
     setMapOBJ( map );
-    setIsLoaded( true );
   };
 
   // const onScriptLoad = async () => {
@@ -93,6 +96,7 @@ const MapInterface: React.FC<{
   // };
 
   const boundChange = () => {
+    setCenter( new google.maps.LatLng( mapOBJ?.getCenter().lat()!, mapOBJ?.getCenter().lng()! ) );
     setMapBound( mapOBJ?.getBounds()! );
   };
 
@@ -150,12 +154,11 @@ const MapInterface: React.FC<{
     setIsInfo( true );
   };
 
-  const renderMap = () => (
-    // <LoadScript googleMapsApiKey={ AppSettings.GOOGLE_API_KEY } onLoad={ onScriptLoad }>
-      <GoogleMap mapContainerStyle={ containerStyle } 
+  return (
+    <GoogleMap mapContainerStyle={ containerStyle } 
         zoom={ 14 } 
         onLoad={ onMapLoad } 
-        center={ availableFeatures.watchPosition? new google.maps.LatLng( currentPosition?.coords.latitude!, currentPosition?.coords.longitude!): center } 
+        center={ center } 
         onDragEnd={ boundChange }>
         {
           markers.map( data => (
@@ -174,10 +177,8 @@ const MapInterface: React.FC<{
           </InfoWindow>
         }
       <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
-      </GoogleMap>
-    // </LoadScript>
+    </GoogleMap>
   );
-
-  return renderMap();
 };
+
 export default MapInterface;
