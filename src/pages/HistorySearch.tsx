@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, } from "react";
 import {
   IonPage,
   IonHeader,
   IonToolbar,
   IonTitle,
-  IonContent, 
+  IonContent,
+  IonGrid,
+  IonRow,
+  useIonViewWillEnter,
+  IonCol,
+  IonItem, 
 } from "@ionic/react";
 import HistoryCard from "../components/HistoryCard";
 import { AppSettings } from "../AppSettings";
@@ -25,14 +30,14 @@ const HistorySearch: React.FC = () => {
     date: { $date: Date }
   }[]>([]);
 
-  useEffect( () => {
+  useIonViewWillEnter( () => {
     const loadData = async () => {
       await fetch(AppSettings.DB_LOCATION+"")
         .then( Response => Response.json() )
         .then( data => setData(data) )
       };
     loadData();
-  },[]);
+  });
 
   function createKey( id: string ){
     return id;
@@ -46,9 +51,18 @@ const HistorySearch: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent>
+        <IonGrid>
+          <IonRow>
+            <IonCol>
+              <IonItem>
+                Search
+              </IonItem>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
         {
           data.map( info => (
-            <HistoryCard key={createKey(info._id.$oid)}
+            <HistoryCard key={ createKey( info._id.$oid ) }
               imei={info.imei}
               rssi={info.rssi}
               rsrp={info.rsrp}

@@ -78,23 +78,6 @@ const MapInterface: React.FC<{
     setMapOBJ( map );
   };
 
-  // const onScriptLoad = async () => {
-  //   await fetch( AppSettings.DB_LOCATION + '' )
-  //     .then( response => response.json() )
-  //     .then( data => 
-  //       {  
-  //         setMarkers(data);
-  //       }
-  //   );
-  //   if( availableFeatures.watchPosition ){
-  //     getPosition({ timeout: 30000 });
-  //     setCenter( new google.maps.LatLng( currentPosition?.coords.latitude!, currentPosition?.coords.longitude! ));
-  //   }
-  //   else{
-  //     setCenter( new google.maps.LatLng( { lat: 13.7625293, lng: 100.5655906 })); //TRUE Building
-  //   }
-  // };
-
   const boundChange = () => {
     setCenter( new google.maps.LatLng( mapOBJ?.getCenter().lat()!, mapOBJ?.getCenter().lng()! ) );
     setMapBound( mapOBJ?.getBounds()! );

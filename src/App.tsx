@@ -8,7 +8,7 @@ import {
   IonTabButton,
 } from "@ionic/react";
 import { IonReactRouter, } from "@ionic/react-router";
-import { Route, } from "react-router-dom";
+import { Route, Redirect, } from "react-router-dom";
 import { LoadScript } from "@react-google-maps/api";
 
 /* Pages and components */
@@ -37,6 +37,7 @@ import "@ionic/react/css/display.css";
 import "./theme/variables.css";
 
 const App: React.FC = () => {
+  
   return (
     <React.Fragment>
       <IonApp>
@@ -46,7 +47,7 @@ const App: React.FC = () => {
               <Route path="/signalchecker" component={SignalChecker} />
               <Route path="/mapinfo" component={MapInfo} />
               <Route path="/historysearch" component={HistorySearch} />
-              <Route path="/" component={SignalChecker} exact />
+              <Redirect from="/" to="/signalchecker" exact />
             </IonRouterOutlet>
             <IonTabBar slot="bottom">
               <IonTabButton tab="signalchecker" href="/signalchecker">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonSegment,
   IonSegmentButton,
@@ -12,10 +12,13 @@ import {
   IonAlert,
   IonLoading,
 } from "@ionic/react";
+import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings"
 
+const { Storage } = Plugins;
+
 const ConnectionSetting: React.FC<{
-  onChangeIsConnect: (imei: string, mode: string, rpiDestination: string) => void;
+  onChangeIsConnect: (imei: string, imsi: string,  mode: string, rpiDestination: string) => void;
 }> = (props) => {
   const [rpiIP, setRPiIP] = useState<string>(AppSettings.RPI_IP);
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
@@ -23,6 +26,23 @@ const ConnectionSetting: React.FC<{
   const [band, setBand] = useState<string>(AppSettings.BAND);
   const [errorConnection, setErrorConnection] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect( () => {
+    loadSetting();
+  }, []);
+
+  const loadSetting = async () => {
+    const mode = await Storage.get({ key: 'mode' });
+    if( mode.value ){
+      const band = await Storage.get({ key: 'band' });
+      const ip = await Storage.get({ key: 'rpiIP' });
+      const port = await Storage.get({ key: 'rpiPort' });
+      setMode( mode.value );
+      setBand( band.value! );
+      setRPiIP( ip.value! );
+      setRPiPort( +port.value! );
+    }
+  };
 
   const ipPortInput = () => {
     if (
@@ -62,8 +82,16 @@ const ConnectionSetting: React.FC<{
       .then( (response) => response.json() )
       .then( (data) => { return data; })
     setLoading(false);
-    if( result[0] == "F" ) { setErrorConnection("Cannot connect to Base!"); return ;}
-    props.onChangeIsConnect( result[0], result[1], rpiIP + ":" + rpiPort );
+    if( result[0] === "F" ) { setErrorConnection("Cannot connect to Base!"); return ; }
+    props.onChangeIsConnect( result[0], result[1], result[2], rpiIP + ":" + rpiPort );
+  };
+
+  const saveSetting = async () => {
+    await Storage.set({ key: 'mode', value: mode });
+    await Storage.set({ key: 'band', value: band });
+    await Storage.set({ key: 'rpiIP', value: rpiIP });
+    await Storage.set({ key: 'rpiPort', value: rpiPort.toString() });
+    rpiConnect();
   };
 
   return (
@@ -129,6 +157,11 @@ const ConnectionSetting: React.FC<{
       <IonRow>
         <IonCol className="ion-margin-top">
           <IonButton onClick={rpiConnect} expand="full" size="large">Connect</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={saveSetting} expand="full" size="large">Save & Connect</IonButton>
         </IonCol>
       </IonRow>
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { 
     IonPage, 
     IonHeader, 
@@ -10,19 +10,12 @@ import {
     IonSelectOption,
     IonCard, 
 } from "@ionic/react";
-import { availableFeatures } from "@ionic/react-hooks/geolocation"
 import MapInterface from "../components/MapInterface";
 
 const MapInfo: React.FC = () => {
 
   const [ error, setError ] = useState<string>();
   const [ showValue, setShowValue ] = useState< "rssi" | "rsrp" | "sinr" | "rsrq" >("rssi");
-
-  useEffect( () => {
-    if(!availableFeatures.watchPosition){
-      setError("Geolocation service is not available.")
-    };
-  },[]);
 
   const clearError = () => {
     setError("")
