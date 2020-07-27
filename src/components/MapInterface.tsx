@@ -36,31 +36,36 @@ const MapInterface: React.FC<{
   });
 
   useIonViewDidEnter( () => {
-    const loadData = async () => {
-      await fetch( AppSettings.DB_LOCATION + '' )
-        .then( response => response.json() )
-        .then( data => 
-          {  
-            setMarkers(data);
-          }
-      );
-    }
-    loadData();
+    // if( !( typeof mapBound === 'undefined') ){
+    //   loadData( mapBound?.getNorthEast().lat(), mapBound?.getNorthEast().lng(), mapBound?.getSouthWest().lat(), mapBound?.getSouthWest().lng() );
+    // }
     setIsLoaded( true );
   });
 
   useEffect( () => {
-    const reloadMarker = async () => {
-      if( !mapBound ) console.log("lololol");
-      if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
-      // console.log(mapBound?.getNorthEast().lat());
-    };
     reloadMarker();
+    if( !( typeof mapBound === 'undefined') ){
+      loadData( mapBound?.getNorthEast().lat()!, mapBound?.getNorthEast().lng()!, mapBound?.getSouthWest().lat()!, mapBound?.getSouthWest().lng()! );
+    }
   }, [ mapBound ]);
 
   useEffect( () => {
     setIsInfo(false);
   }, [ props.showValue ]);
+
+  const reloadMarker = async () => {
+    if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
+  };
+
+  const loadData = async ( latNE: number, lngNE: number, latSW: number, lngSW: number ) => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+
+    await fetch( AppSettings.DB_LOCATION + "/areafind?latNE=" + latNE + "&lngNE=" + lngNE + "&latSW=" + latSW + "&lngSW=" + lngSW, { signal })
+      .then( response => response.json() )
+      .then( data => { setMarkers( data ); console.log( data.length ); });
+  };
 
   const containerStyle = {
     width: '100%',
@@ -142,7 +147,8 @@ const MapInterface: React.FC<{
         zoom={ 14 } 
         onLoad={ onMapLoad } 
         center={ center } 
-        onDragEnd={ boundChange }>
+        onDragEnd={ boundChange }
+        onTilesLoaded={ boundChange }>
         {
           markers.map( data => (
             <Marker key={ data._id.$oid } 

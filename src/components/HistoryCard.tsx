@@ -1,7 +1,6 @@
 import React from "react";
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from "@ionic/react";
 import MapCustomView from "./MapCustomView";
-// import { AppSettings } from "../AppSettings"
 
 const HistoryCard: React.FC<{
   imei: string,
@@ -47,6 +46,7 @@ const HistoryCard: React.FC<{
             </IonCol>
             <IonCol>
               <p>{timestampConverter()}</p>
+              {/* <p>{props.date}</p> */}
               <p>{props.imei}</p>
               <p>{props.mode}</p>
               <p>{props.rssi}</p>

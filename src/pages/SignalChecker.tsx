@@ -67,13 +67,18 @@ const SignalChecker: React.FC = () => {
     clearInterval( timerId );
   });
 
-  const checkConnect = async () => {
+  const getURL = async () => {
     let url;
     const ip = await Storage.get({ key: "rpiIP" });
     const port = await Storage.get({ key: "rpiPort" });
     if( ip.value ) { url = ip.value + ":" + port.value; }
-    else { url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT; }
+    else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
     setRPiDestination( url );
+    return url;
+  };
+
+  const checkConnect = async () => {
+    const url = await getURL();
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -97,9 +102,37 @@ const SignalChecker: React.FC = () => {
     }
   };
 
+  const reconnect = async () => {
+    const url = await getURL();
+    const m = await Storage.get({ key: "mode" });
+    const b = await Storage.get({ key: "band" });
+    let modetmp,bandtmp;
+    if( m.value && b.value ){
+      modetmp = m.value;
+      bandtmp = b.value;
+    }
+    else{
+      modetmp = AppSettings.MODE;
+      bandtmp = AppSettings.BAND;
+    }
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+    const res = await fetch( "http://" + url + "/connectBase?mode=" + modetmp + "&band=" + bandtmp, { signal } )
+      .then( response => response.json() )
+      .then( data => { return data });
+    setIMEI( res[0] );
+    setIMSI( res[1] );
+    setMode( res[2] );
+  };
+
   const signalStrength = async () => {
     setLoading(true);
-    const signalStrength = await fetch("http://" + rpiDestination + "/signalStrength")
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+    const signalStrength = await fetch("http://" + rpiDestination + "/signalStrength", { signal })
       .then((response) => response.json())
       .then((data) => { return data });
     setRSSI(signalStrength[0]);
@@ -217,7 +250,7 @@ const SignalChecker: React.FC = () => {
         <IonGrid>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => console.log('aa') } expand="full">Connect</IonButton>
+              <IonButton onClick={ () => reconnect } expand="full">Reconnect</IonButton>
             </IonCol>
           </IonRow>
           <IonCard>

@@ -78,7 +78,11 @@ const ConnectionSetting: React.FC<{
     if ( ipPortInput() ) return ;
     const uri = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
     setLoading(true);
-    const result = await fetch(uri)
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+    const result = await fetch(uri, { signal })
       .then( (response) => response.json() )
       .then( (data) => { return data; })
     setLoading(false);

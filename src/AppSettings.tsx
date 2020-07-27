@@ -11,4 +11,5 @@ export class AppSettings {
   public static DEFAULT_PING_SITE: string = "www.google.com";
   public static DEFAULT_PING_RETRY: number = 5;
   public static CONNECTION_INTERVAL: number = 60000;
+  public static CONNECT_TIMEOUT: number = 30000;
 }

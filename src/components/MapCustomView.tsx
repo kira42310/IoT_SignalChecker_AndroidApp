@@ -1,6 +1,5 @@
 import React from "react";
-import { GoogleMap, Marker, LoadScript } from "@react-google-maps/api";
-import { AppSettings } from "../AppSettings";
+import { GoogleMap, Marker, } from "@react-google-maps/api";
 
 const MapCustomView: React.FC<{
   latitude: number,
@@ -14,14 +13,12 @@ const MapCustomView: React.FC<{
   }
 
   const renderMap = () =>
-    // <LoadScript googleMapsApiKey={AppSettings.GOOGLE_API_KEY} >
     <GoogleMap mapContainerStyle={ containerStyle } 
       zoom={ 16 } 
       center={{ lat: props.latitude, lng: props.longtitude }} 
       options={{ gestureHandling:"none", zoomControl: false, disableDefaultUI: true }} >
       <Marker position={{ lat: props.latitude, lng: props.longtitude }} />
     </GoogleMap>
-    // </LoadScript>
 
   return renderMap();
 };
