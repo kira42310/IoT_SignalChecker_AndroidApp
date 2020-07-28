@@ -16,7 +16,6 @@ const MapInterface: React.FC<{
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
   const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
-  const [ mapBound, setMapBound ] = useState< google.maps.LatLngBounds >();
   const [ markers, setMarkers ] = useState<{ 
     latitude: number, 
     longitude: number, 
@@ -43,17 +42,10 @@ const MapInterface: React.FC<{
   });
 
   useEffect( () => {
-    reloadMarker();
-    if( !( typeof mapBound === 'undefined') ){
-      loadData( mapBound?.getNorthEast().lat()!, mapBound?.getNorthEast().lng()!, mapBound?.getSouthWest().lat()!, mapBound?.getSouthWest().lng()! );
-    }
-  }, [ mapBound ]);
-
-  useEffect( () => {
     setIsInfo(false);
   }, [ props.showValue ]);
 
-  const reloadMarker = async () => {
+  const reloadMarker = async ( mapBound: google.maps.LatLngBounds ) => {
     if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
   };
 
@@ -64,7 +56,7 @@ const MapInterface: React.FC<{
 
     await fetch( AppSettings.DB_LOCATION + "/areafind?latNE=" + latNE + "&lngNE=" + lngNE + "&latSW=" + latSW + "&lngSW=" + lngSW, { signal })
       .then( response => response.json() )
-      .then( data => { setMarkers( data ); console.log( data.length ); });
+      .then( data => { setMarkers( data ); });
   };
 
   const containerStyle = {
@@ -85,7 +77,11 @@ const MapInterface: React.FC<{
 
   const boundChange = () => {
     setCenter( new google.maps.LatLng( mapOBJ?.getCenter().lat()!, mapOBJ?.getCenter().lng()! ) );
-    setMapBound( mapOBJ?.getBounds()! );
+    const mapBound = mapOBJ?.getBounds();
+    reloadMarker( mapBound! );
+    if( !( typeof mapOBJ?.getBounds() === 'undefined') ){
+      loadData( mapBound?.getNorthEast().lat()!, mapBound?.getNorthEast().lng()!, mapBound?.getSouthWest().lat()!, mapBound?.getSouthWest().lng()! );
+    }
   };
 
   const convertDataToIcon = ( data: number ) => {
