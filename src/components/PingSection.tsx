@@ -29,17 +29,20 @@ const PingSection: React.FC<{
   };
 
   const pingSite = async () => {
-    const uri = ("http://" + props.destination + "/ping?site=" + site )
+    const url = ("http://" + props.destination + "/ping?site=" + site )
     var result:any;
     setLoading(true);
     for( var i = 0; i <= retry; i++){
-      result = await fetch(uri)
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout(() => controller.abort(), AppSettings.CONNECT_TIMEOUT);
+      result = await fetch(url, {signal})
         .then( (response) => response.json() )
         .then( (data) => { return data; })
       if( result ){ break; }
     };
     setLoading(false);
-    if( result[0] == "F" ) { setErrorConnection("Cannot Ping!"); return ;}
+    if( result[0] === "F" ) { setErrorConnection("Cannot Ping!"); return ;}
     setData({ send: result[0], recv: result[1], avg: result[2] });
     setShowData(true);
   };

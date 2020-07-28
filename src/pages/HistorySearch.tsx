@@ -78,7 +78,7 @@ const HistorySearch: React.FC = () => {
       .then( response => response.json() )
       .then( d => { 
         setData( d ); 
-        if( d.length == 10 ){
+        if( d.length === 10 ){
           setHasMore( true );
           setPage( 2 );
         }
@@ -101,7 +101,7 @@ const HistorySearch: React.FC = () => {
       .then( response => response.json() )
       .then( d => { 
         setData([ ...data, ...d ]); 
-        if( d.length == 10 ){
+        if( d.length === 10 ){
           setPage( page + 1 );
         }
         else{
