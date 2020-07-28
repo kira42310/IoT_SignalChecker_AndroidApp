@@ -110,6 +110,13 @@ const HistorySearch: React.FC = () => {
       });
   };
 
+  const clearInput = () => {
+    const tmp = new Date().toISOString();
+    setDTFrom( tmp );
+    setDTEnd( tmp );
+    setIMEI(""); 
+  };
+
   const getIMEIFromStorage = async () => {
     const res = await Storage.get({ key: 'imei' });
     if( res.value ) setIMEI( res.value );
@@ -154,8 +161,15 @@ const HistorySearch: React.FC = () => {
                 </IonItem>
               </IonCol>
             </IonRow>
+            <IonRow>
+              <IonCol>
+                <IonButton expand="block" onClick={ searchData }>Search</IonButton>
+              </IonCol>
+              <IonCol>
+                <IonButton expand="block" onClick={ clearInput }>Clear</IonButton>
+              </IonCol>
+            </IonRow>
           </IonGrid>
-          <IonButton expand="block" onClick={ searchData }>Search</IonButton>
         </IonCard>
         {
           data.map( info => (
