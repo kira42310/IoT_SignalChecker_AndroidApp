@@ -20,7 +20,6 @@ import {
   IonButton, 
 } from "@ionic/react";
 import { Plugins } from "@capacitor/core";
-import InfiniteScroll from "react-infinite-scroll-component";
 import HistoryCard from "../components/HistoryCard";
 import { AppSettings } from "../AppSettings";
 
@@ -31,7 +30,11 @@ const HistorySearch: React.FC = () => {
   const [ dtFrom, setDTFrom ] = useState<string>();
   const [ dtEnd, setDTEnd ] = useState<string>();
   const [ imei, setIMEI ] = useState<string>();
-  const [ page, setPage ] = useState<number>(0);
+  const [ refDTFrom, setRefDTFrom ] = useState<string>();
+  const [ refDTEnd, setRefDTEnd ] = useState<string>();
+  const [ refIMEI, setRefIMEI ] = useState<string>();
+  const [ page, setPage ] = useState<number>(1);
+  const [ hasMore, setHasMore ] = useState<boolean>(true);
 
   const [ data, setData ] = useState<{ 
     imei: string, 
@@ -63,18 +66,48 @@ const HistorySearch: React.FC = () => {
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
 
-    let url = AppSettings.DB_LOCATION + "/search?page=" + page;
+    let url = AppSettings.DB_LOCATION + "/search?page=" + 1;
     if( imei ) url += "&imei=" + imei.toString();
     if(!( dtFrom === dtEnd )) url += "&start=" + new Date(dtFrom!).toJSON() + "&end=" + new Date(dtEnd!).toJSON();
-    console.log( url );
-    
-    // await fetch( url, { signal })
-    //   .then( response => response.json() )
-    //   .then( data => setData( data ) );
+
+    setRefIMEI( imei );
+    setRefDTFrom( dtFrom );
+    setRefDTEnd( dtEnd );
 
     await fetch( url, { signal })
       .then( response => response.json() )
-      .then( data => { setData( data ); console.log( data.length ); });
+      .then( d => { 
+        setData( d ); 
+        if( d.length == 10 ){
+          setHasMore( true );
+          setPage( 2 );
+        }
+        else{
+          setHasMore( false );
+        }
+      });
+  };
+
+  const searchNext = async () => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+
+    let url = AppSettings.DB_LOCATION + "/search?page=" + page;
+    if( imei ) url += "&imei=" + refIMEI!.toString();
+    if(!( dtFrom === dtEnd )) url += "&start=" + new Date(refDTFrom!).toJSON() + "&end=" + new Date(refDTEnd!).toJSON();
+
+    await fetch( url, { signal })
+      .then( response => response.json() )
+      .then( d => { 
+        setData([ ...data, ...d ]); 
+        if( d.length == 10 ){
+          setPage( page + 1 );
+        }
+        else{
+          setHasMore( false );
+        }
+      });
   };
 
   const getIMEIFromStorage = async () => {
@@ -124,29 +157,23 @@ const HistorySearch: React.FC = () => {
           </IonGrid>
           <IonButton expand="block" onClick={ searchData }>Search</IonButton>
         </IonCard>
-        <InfiniteScroll
-          dataLength={ 10 }
-          next={ searchData }
-          hasMore={ true }
-          loader={ <h4>Loading...</h4> }
-        >
-          {
-            data.map( info => (
-              <HistoryCard key={ createKey( info._id.$oid ) }
-                imei={info.imei}
-                rssi={info.rssi}
-                rsrp={info.rsrp}
-                sinr={info.sinr}
-                rsrq={info.rsrq}
-                pcid={info.pcid}
-                mode={info.mode}
-                date={info.date.$date}
-                lat={info.latitude}
-                lng={info.longitude}
-              />
-            ))
-          }
-        </InfiniteScroll>
+        {
+          data.map( info => (
+            <HistoryCard key={ createKey( info._id.$oid ) }
+              imei={info.imei}
+              rssi={info.rssi}
+              rsrp={info.rsrp}
+              sinr={info.sinr}
+              rsrq={info.rsrq}
+              pcid={info.pcid}
+              mode={info.mode}
+              date={info.date.$date}
+              lat={info.latitude}
+              lng={info.longitude}
+            />
+          ))
+        }
+        <IonButton fill="outline" expand="block" onClick={ searchNext } disabled={!hasMore}>{ hasMore? "Load More":"Finish" }</IonButton>
       </IonContent>
     </IonPage>
   );
