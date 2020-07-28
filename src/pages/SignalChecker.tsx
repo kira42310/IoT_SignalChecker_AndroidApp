@@ -22,7 +22,7 @@ import {
   IonIcon,
   useIonViewDidEnter,
   useIonViewWillLeave,
-  IonToggle,
+  IonToast,
 } from "@ionic/react";
 import { settings, ellipse } from "ionicons/icons";
 import { Plugins } from "@capacitor/core";
@@ -56,7 +56,11 @@ const SignalChecker: React.FC = () => {
   const [ enableTrackBTN, setEnableTrackBTN ] = useState<boolean>(false);
   const [ delay, setDelayTracking ] = useState<number>(AppSettings.TRACKING_DELAY);
   const [ loading, setLoading ] = useState<boolean>(false);
+  const [ summitCheck, setSummitCheck ] = useState<boolean>(false);
   let timerId: any;
+
+  // const toast = document.querySelector( "ion-toast" );
+  // toast?.style.setProperty( "--transfrom", "translateY(-56px)");
 
   useIonViewDidEnter( () => {
     checkConnect();
@@ -233,6 +237,10 @@ const SignalChecker: React.FC = () => {
     setError("");
   };
 
+  const clearSummitCheck = () => {
+    setSummitCheck( false );
+  };
+
   return (
     <IonPage>
       <IonHeader>
@@ -248,11 +256,11 @@ const SignalChecker: React.FC = () => {
       </IonHeader>
       <IonContent>
         <IonGrid>
-          <IonRow>
+          {/* <IonRow>
             <IonCol>
               <IonButton onClick={ () => reconnect } expand="full">Reconnect</IonButton>
             </IonCol>
-          </IonRow>
+          </IonRow> */}
           <IonCard>
             <IonCardContent>
               <IonRow>
@@ -285,14 +293,8 @@ const SignalChecker: React.FC = () => {
             </IonCol>
           </IonRow>
           <IonRow>
-            <IonCol size="7">
-              <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Signal Check</IonButton>
-            </IonCol>
             <IonCol>
-                <IonItem>
-                  <IonLabel>Record</IonLabel>
-                  <IonToggle slot="start" disabled={ !isConnect } onIonChange={ e => console.log(e.detail.checked) } />
-                </IonItem>
+              <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Signal Check</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
@@ -329,16 +331,6 @@ const SignalChecker: React.FC = () => {
               </IonCard>
             </IonCol>
           </IonRow>
-          {/* <IonCard>
-            <IonCardContent>
-              <IonRow>
-                <IonCol size="3"><IonLabel>RSSI:</IonLabel>{rssi}</IonCol>
-                <IonCol size="3"><IonLabel>RSRP:</IonLabel>{rsrp}</IonCol>
-                <IonCol size="3"><IonLabel>SINR:</IonLabel>{sinr}</IonCol>
-                <IonCol size="3"><IonLabel>RSRQ:</IonLabel>{rsrq}</IonCol>
-              </IonRow>
-            </IonCardContent>
-          </IonCard> */}
         </IonGrid>
       </IonContent>
       <IonModal isOpen={connectionWindow}>
@@ -364,7 +356,18 @@ const SignalChecker: React.FC = () => {
         <PingSection destination={rpiDestination!} />
       </IonModal>
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
-      <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
+      <IonAlert 
+        isOpen={ summitCheck } 
+        message={ "Do you want to Summit Data?" } 
+        buttons={[
+          { text: "Yes", handler: clearSummitCheck },
+          { text: "No", handler: clearSummitCheck }
+        ]} />
+      <IonLoading isOpen={ loading } message={ "Please Wait..." } backdropDismiss={ true } />
+      <IonToast 
+        isOpen={ true } 
+        cssClass="tabs-bottom"
+        message="test" />
     </IonPage>
   );
 };

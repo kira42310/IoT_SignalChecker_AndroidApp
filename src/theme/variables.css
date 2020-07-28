@@ -314,6 +314,10 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-tint: var(--ion-color-black-tint);
 }
 
+.md .tabs-bottom {
+  transform: translateY(-56px) !important;
+}
+
 @media (prefers-color-scheme: dark) {
   /*
    * Dark Colors
