@@ -24,10 +24,12 @@ import {
   useIonViewWillLeave,
   IonToast,
 } from "@ionic/react";
-import { settings, ellipse } from "ionicons/icons";
+import { settings, ellipse, refresh } from "ionicons/icons";
 import { Plugins } from "@capacitor/core";
 import ConnectionSetting from "../components/ConnectionSetting";
 import PingSection from "../components/PingSection";
+import StaticCheck from "../components/StaticCheck";
+import MovingCheck from "../components/MovingCheck";
 import { AppSettings } from "../AppSettings";
 
 const { Geolocation, Storage } = Plugins;
@@ -40,16 +42,18 @@ const SignalChecker: React.FC = () => {
   const [ imei, setIMEI ] = useState<string>();
   const [ imsi, setIMSI ] = useState<string>();
   const [ rssi, setRSSI ] = useState<string>();
+  const [ rssiColor, setRSSIColor ] = useState<string>( 'dark' );
   const [ rsrp, setRSRP ] = useState<string>();
+  const [ rsrpColor, setRSRPColor ] = useState<string>( 'dark' );
   const [ sinr, setSINR ] = useState<string>();
+  const [ sinrColor, setSINRColor ] = useState<string>( 'dark' );
   const [ rsrq, setRSRQ ] = useState<string>();
-  const [ colorRSSI, setColorRSSI ] = useState<string>( 'dark' );
-  const [ colorRSRP, setColorRSRP ] = useState<string>( 'dark' );
-  const [ colorSINR, setColorSINR ] = useState<string>( 'dark' );
-  const [ colorRSRQ, setColorRSRQ ] = useState<string>( 'dark' );
+  const [ rsrqColor, setRSRQColor ] = useState<string>( 'dark' );
   const [ mode, setMode ] = useState<string>();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
+  const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
+  const [ movingWindow, setMovingWindow ] = useState<boolean>(false);
   const [ isTrack, setIsTrack ] = useState<boolean>(false);
   // const [ trackHandler, setTrackHandler ] = useState<any>();
   const [ enableBTN, setEnableBTN ] = useState<boolean>(false);
@@ -57,18 +61,17 @@ const SignalChecker: React.FC = () => {
   const [ delay, setDelayTracking ] = useState<number>(AppSettings.TRACKING_DELAY);
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ summitCheck, setSummitCheck ] = useState<boolean>(false);
+  const [ toastRecon, setToastRecon ] = useState<boolean>(true);
+  const [ location, setLocation ] = useState<google.maps.LatLng>();
   let timerId: any;
 
-  // const toast = document.querySelector( "ion-toast" );
-  // toast?.style.setProperty( "--transfrom", "translateY(-56px)");
-
   useIonViewDidEnter( () => {
-    checkConnect();
-    timerId = setInterval( () => checkConnect(), AppSettings.CONNECTION_INTERVAL );
+    setIntervalCheckConnect();
   });
 
   useIonViewWillLeave( () => {
     clearInterval( timerId );
+    setToastRecon( false );
   });
 
   const getURL = async () => {
@@ -79,6 +82,17 @@ const SignalChecker: React.FC = () => {
     else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
     setRPiDestination( url );
     return url;
+  };
+
+  const getLocation = async () => {
+    const tmp = await Geolocation.getCurrentPosition();
+    setLocation( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+  };
+
+  const setIntervalCheckConnect = () => {
+    clearInterval( timerId );
+    checkConnect();
+    timerId = setInterval( () => checkConnect(), AppSettings.CONNECTION_INTERVAL );
   };
 
   const checkConnect = async () => {
@@ -93,9 +107,11 @@ const SignalChecker: React.FC = () => {
       .catch(( error ) => { console.log( error ); });
     if( result === true ){
       setIsConnect( true );
+      setToastRecon( false );
       const data = await fetch( "http://" + url + "/info" )
         .then(( response ) => response.json() )
-        .then(( data ) => { return data });
+        .then(( data ) => { return data })
+        .catch( e => console.log( e ));
       setIMEI( data[0] );
       setIMSI( data[1] );
       setMode( data[2] );
@@ -103,6 +119,7 @@ const SignalChecker: React.FC = () => {
     else if( result === undefined ){
       clearInterval( timerId );
       setIsConnect( false );
+      setToastRecon( true );
     }
   };
 
@@ -125,10 +142,13 @@ const SignalChecker: React.FC = () => {
     setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
     const res = await fetch( "http://" + url + "/connectBase?mode=" + modetmp + "&band=" + bandtmp, { signal } )
       .then( response => response.json() )
-      .then( data => { return data });
-    setIMEI( res[0] );
-    setIMSI( res[1] );
-    setMode( res[2] );
+      .then( data => { return data })
+      .catch( e => console.log( e ) );
+    if( !res === undefined ){
+      setIMEI( res[0] );
+      setIMSI( res[1] );
+      setMode( res[2] );
+    }
   };
 
   const signalStrength = async () => {
@@ -140,13 +160,13 @@ const SignalChecker: React.FC = () => {
       .then((response) => response.json())
       .then((data) => { return data });
     setRSSI(signalStrength[0]);
-    setColorRSSI( getColorRssiRsrp( signalStrength[0]  ) );
+    setRSSIColor( AppSettings.getColorRssiRsrp( signalStrength[0]  ) );
     setRSRP(signalStrength[1]);
-    setColorRSRP( getColorRssiRsrp( signalStrength[1] ) );
+    setRSRPColor( AppSettings.getColorRssiRsrp( signalStrength[1] ) );
     setSINR(signalStrength[2]);
-    setColorSINR( getColorSinr( signalStrength[2] ) );
+    setSINRColor( AppSettings.getColorSinr( signalStrength[2] ) );
     setRSRQ(signalStrength[3]);
-    setColorRSRQ( getColorRsrq( signalStrength[3] ) );
+    setRSRQColor( AppSettings.getColorRsrq( signalStrength[3] ) );
     const position = await Geolocation.getCurrentPosition();
     const dbOption = {
       method: "POST",
@@ -198,39 +218,7 @@ const SignalChecker: React.FC = () => {
     setConnectionWindow(false);
     setEnableBTN(true);
     setEnableTrackBTN(true);
-    clearInterval( timerId );
-    timerId = setInterval( checkConnect, AppSettings.CONNECTION_INTERVAL );
-  };
-
-  const getColorRssiRsrp = ( data: number ) => {
-    if( data >= -80 ) return "blue"
-    else if( data < -80 && data >= -90 ) return "aqua"
-    else if( data < -90 && data >= -95 ) return "darkgreen"
-    else if( data < -95 && data >= -100 ) return "greenyellow"
-    else if( data < -100 && data >= -110 ) return "yellow"
-    else if( data < -110 && data >= -116 ) return "red"
-    else if( data < -116 && data >= -124 ) return "grey"
-    else if( data < -124 ) return "darkblue"
-    else return "black"
-  };
-
-  const getColorSinr = ( data: number ) => {
-    if( data >= 20 ) return "purple"
-    if( data < 20 && data >= 15 ) return "hotpink"
-    if( data < 15 && data >= 10 ) return "goldenrod"
-    if( data < 10 && data >= 5 ) return "cornflowerblue"
-    if( data < 5 && data >= 0 ) return "orchid"
-    if( data < 0 ) return "gray"
-    else return "black"
-  };
-
-  const getColorRsrq = ( data: number ) => {
-    if( data >= -6 ) return "purple"
-    if( data < -6 && data >= -9 ) return "hotpink"
-    if( data < -9 && data >= -11 ) return "cornflowerblue"
-    if( data < -11 && data >= -14 ) return "orchid"
-    if( data < -14 ) return "gray"
-    else return "black"
+    setIntervalCheckConnect();
   };
 
   const clearError = () => {
@@ -239,6 +227,10 @@ const SignalChecker: React.FC = () => {
 
   const clearSummitCheck = () => {
     setSummitCheck( false );
+  };
+
+  const tmpRecon = () => {
+    reconnect();
   };
 
   return (
@@ -256,11 +248,6 @@ const SignalChecker: React.FC = () => {
       </IonHeader>
       <IonContent>
         <IonGrid>
-          {/* <IonRow>
-            <IonCol>
-              <IonButton onClick={ () => reconnect } expand="full">Reconnect</IonButton>
-            </IonCol>
-          </IonRow> */}
           <IonCard>
             <IonCardContent>
               <IonRow>
@@ -294,39 +281,46 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
+              {/* <IonButton onClick={ () => setStaticWindow( true ) } disabled={ !isConnect } expand="full">Static Test</IonButton> */}
+              <IonButton onClick={ () => setStaticWindow( true ) } expand="full">Static Test</IonButton>
+            </IonCol>
+          </IonRow>
+          <IonRow>
+            <IonCol>
+              {/* <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Moving Test</IonButton> */}
+              <IonButton onClick={ () => { getLocation(); setMovingWindow( true ); }} expand="full">Moving Test</IonButton>
+            </IonCol>
+            {/* <IonCol>
+              <IonItem>
+                <IonInput type="number" value={delay} disabled={!enableTrackBTN} placeholder="Delay" onIonChange={e => setDelayTracking(+e.detail.value!)} debounce={500} />
+              </IonItem>
+            </IonCol> */}
+          </IonRow>
+          <IonRow>
+            <IonCol>
               <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Signal Check</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
-            <IonCol>
-              <IonButton onClick={ signalTracker } disabled={ !isConnect } expand="full">Signal Check Tracking Mode</IonButton>
-            </IonCol>
-            <IonCol>
-              <IonItem>
-                <IonInput type="number" value={delay} disabled={!enableTrackBTN} placeholder="Delay" onIonChange={e => setDelayTracking(+e.detail.value!)} debounce={500} />
-              </IonItem>
-            </IonCol>
-          </IonRow>
-          <IonRow>
             <IonCol size="6">
-              <IonCard color={ colorRSSI }>
+              <IonCard color={ rssiColor }>
                 <IonCardContent>RSSI:{ !rssi? "00": rssi }</IonCardContent>
               </IonCard>
             </IonCol>
             <IonCol size="6">
-              <IonCard color={ colorRSRP }>
+              <IonCard color={ rsrpColor }>
                 <IonCardContent>RSRP:{ !rsrp? "00": rsrp }</IonCardContent>
               </IonCard>
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol size="6">
-              <IonCard color={ colorSINR }>
+              <IonCard color={ sinrColor }>
                 <IonCardContent>SINR:{ !sinr? "00": sinr }</IonCardContent>
               </IonCard>
             </IonCol>
             <IonCol size="6">
-              <IonCard color={ colorRSRQ }>
+              <IonCard color={ rsrqColor }>
                 <IonCardContent>RSRQ:{ !rsrq? "00": rsrq }</IonCardContent>
               </IonCard>
             </IonCol>
@@ -355,6 +349,28 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <PingSection destination={rpiDestination!} />
       </IonModal>
+      <IonModal isOpen={ staticWindow }>
+        <IonHeader translucent>
+          <IonToolbar>
+            <IonTitle>Static Test</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={ () => setStaticWindow(false) }>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <StaticCheck destination={rpiDestination!} />
+      </IonModal>
+      <IonModal isOpen={ movingWindow }>
+        <IonHeader translucent>
+          <IonToolbar>
+            <IonTitle>Moving Test</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={ () => setMovingWindow(false) }>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <MovingCheck destination={rpiDestination!} />
+      </IonModal>
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
       <IonAlert 
         isOpen={ summitCheck } 
@@ -362,12 +378,14 @@ const SignalChecker: React.FC = () => {
         buttons={[
           { text: "Yes", handler: clearSummitCheck },
           { text: "No", handler: clearSummitCheck }
-        ]} />
-      <IonLoading isOpen={ loading } message={ "Please Wait..." } backdropDismiss={ true } />
+        ]}
+      />
       <IonToast 
-        isOpen={ true } 
+        isOpen={ toastRecon } 
         cssClass="tabs-bottom"
-        message="test" />
+        buttons={[{ icon: refresh, handler: () => { setToastRecon( false ); tmpRecon(); }}]}
+        message="Reconnect" />
+      <IonLoading isOpen={ loading } message={ "Please Wait..." } backdropDismiss={ true } />
     </IonPage>
   );
 };
