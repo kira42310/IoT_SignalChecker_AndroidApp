@@ -13,6 +13,7 @@ export class AppSettings {
   public static CONNECTION_INTERVAL: number = 60000;
   public static CONNECT_TIMEOUT: number = 30000;
   public static CHECK_INTERVAL_MIN: string = "5";
+  public static CHECK_INTERVAL_SEC: string = "0";
 
   public static getColorRssiRsrp( data: number ): string  {
     if( data >= -80 ) return "blue"

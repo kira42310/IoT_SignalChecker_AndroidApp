@@ -31,6 +31,7 @@ const StaticCheck: React.FC<{
   const [ rsrq, setRSRQ ] = useState<string>();
   const [ rsrqColor, setRSRQColor ] = useState<string>( "dark" );
   const [ intervalMin, setIntervalMin ] = useState<string>( AppSettings.CHECK_INTERVAL_MIN );
+  const [ intervalSec, setIntervalSec ] = useState<string>( AppSettings.CHECK_INTERVAL_SEC );
   const [errorConnection, setErrorConnection] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -91,7 +92,13 @@ const StaticCheck: React.FC<{
         <IonCol>
           <IonLabel>Interval (Minutes)</IonLabel>
           <IonItem>
-            <IonInput type="number" value={ intervalMin } debounce={ 500 } onIonChange={ e => setIntervalMin( e.detail.value! ) } />
+            <IonInput type="number" min="0" value={ intervalMin } debounce={ 500 } onIonChange={ e => setIntervalMin( e.detail.value! ) } />
+          </IonItem>
+        </IonCol>
+        <IonCol>
+          <IonLabel>(Seconds)</IonLabel>
+          <IonItem>
+            <IonInput type="number" min="0" max="59" value={ intervalSec } debounce={ 500 } onIonChange={ e => setIntervalSec( e.detail.value! ) } />
           </IonItem>
         </IonCol>
       </IonRow>

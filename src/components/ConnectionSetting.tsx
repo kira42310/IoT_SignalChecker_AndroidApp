@@ -11,6 +11,7 @@ import {
   IonButton,
   IonAlert,
   IonLoading,
+  useIonViewWillEnter,
 } from "@ionic/react";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings"
@@ -18,7 +19,7 @@ import { AppSettings } from "../AppSettings"
 const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
-  onChangeIsConnect: (imei: string, imsi: string,  mode: string, rpiDestination: string) => void;
+  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, rpiDestination: string) => void;
 }> = (props) => {
   const [rpiIP, setRPiIP] = useState<string>(AppSettings.RPI_IP);
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
@@ -29,7 +30,7 @@ const ConnectionSetting: React.FC<{
 
   useEffect( () => {
     loadSetting();
-  }, []);
+  },[]);
 
   const loadSetting = async () => {
     const mode = await Storage.get({ key: 'mode' });
@@ -76,18 +77,31 @@ const ConnectionSetting: React.FC<{
 
   const rpiConnect = async () => {
     if ( ipPortInput() ) return ;
-    const uri = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
+    const url = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
     setLoading(true);
 
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
-    const result = await fetch(uri, { signal })
+    const result = await fetch(url, { signal })
       .then( (response) => response.json() )
       .then( (data) => { return data; })
     setLoading(false);
     if( result[0] === "F" ) { setErrorConnection("Cannot connect to Base!"); return ; }
-    props.onChangeIsConnect( result[0], result[1], result[2], rpiIP + ":" + rpiPort );
+    props.onChangeIsConnect( result[0], result[1], result[2], result[3], rpiIP + ":" + rpiPort );
+  };
+
+  const resetModule = async () => {
+    const url = ("http://" + rpiIP + ":" + rpiPort + "/repair")
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+
+    const result = await fetch( url, { signal })
+      .then( response => response.json() )
+      .then( d => { return d });
+    if( result ) setErrorConnection( "Reset success" );
+    else setErrorConnection( "Reset Fail" );
   };
 
   const saveSetting = async () => {
@@ -166,6 +180,11 @@ const ConnectionSetting: React.FC<{
       <IonRow>
         <IonCol className="ion-margin-top">
           <IonButton onClick={saveSetting} expand="full" size="large">Save & Connect</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={ resetModule } expand="full" size="large">Reset Module</IonButton>
         </IonCol>
       </IonRow>
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />

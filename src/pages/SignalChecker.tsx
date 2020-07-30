@@ -50,6 +50,7 @@ const SignalChecker: React.FC = () => {
   const [ rsrq, setRSRQ ] = useState<string>();
   const [ rsrqColor, setRSRQColor ] = useState<string>( 'dark' );
   const [ mode, setMode ] = useState<string>();
+  const [ band, setBand ] = useState<string>();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
   const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
@@ -115,6 +116,7 @@ const SignalChecker: React.FC = () => {
       setIMEI( data[0] );
       setIMSI( data[1] );
       setMode( data[2] );
+      setBand( data[3] );
     }
     else if( result === undefined ){
       clearInterval( timerId );
@@ -124,6 +126,8 @@ const SignalChecker: React.FC = () => {
   };
 
   const reconnect = async () => {
+    setLoading( true );
+    clearInterval( timerId );
     const url = await getURL();
     const m = await Storage.get({ key: "mode" });
     const b = await Storage.get({ key: "band" });
@@ -144,21 +148,32 @@ const SignalChecker: React.FC = () => {
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
-    if( !res === undefined ){
+    if( res ){
+      setIsConnect( true );
+      setToastRecon( false );
       setIMEI( res[0] );
       setIMSI( res[1] );
       setMode( res[2] );
+      setBand( res[3] );
+      setIntervalCheckConnect();
     }
+    else{
+      setToastRecon( true );
+      setIsConnect( false );
+    }
+    setLoading( false );
   };
 
   const signalStrength = async () => {
     setLoading(true);
+    clearInterval( timerId );
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
     const signalStrength = await fetch("http://" + rpiDestination + "/signalStrength", { signal })
       .then((response) => response.json())
-      .then((data) => { return data });
+      .then((data) => { return data })
+      .catch( () => { setIsConnect( false ); setError( "Connection to station fail"); } );
     setRSSI(signalStrength[0]);
     setRSSIColor( AppSettings.getColorRssiRsrp( signalStrength[0]  ) );
     setRSRP(signalStrength[1]);
@@ -190,6 +205,7 @@ const SignalChecker: React.FC = () => {
     //   .catch(error => console.log(error));
     // console.log(result);
     
+    setIntervalCheckConnect();
     setLoading(false);
   };
 
@@ -209,11 +225,12 @@ const SignalChecker: React.FC = () => {
     }
   };
 
-  const changeIsConnect = ( imei: string, imsi: string, mode: string , destination: string ) => {
+  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, destination: string ) => {
     setIsConnect(true);
     setIMEI(imei);
     setIMSI(imsi);
     setMode(mode);
+    setBand(band);
     setRPiDestination(destination);
     setConnectionWindow(false);
     setEnableBTN(true);
@@ -263,13 +280,15 @@ const SignalChecker: React.FC = () => {
                 </IonCol>
               </IonRow>
               <IonRow>
-                <IonCol class="ion-align-self-center" size="3"><IonLabel>Mode:</IonLabel></IonCol>
-                <IonCol class="ion-align-self-center" size="3">
+                <IonCol class="ion-align-self-center"><IonLabel>Mode:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
                   { isConnect? <IonChip color="primary" >{mode}</IonChip>:<IonChip color="danger">X</IonChip> }
                 </IonCol>
-                <IonCol class="ion-align-self-center" size="3"><IonLabel>Band:</IonLabel></IonCol>
-                <IonCol class="ion-align-self-center" size="3">
-                  { isConnect? <IonChip color="primary">XXX</IonChip>:<IonChip color="danger">X</IonChip> }
+              </IonRow>
+              <IonRow>
+                <IonCol class="ion-align-self-center"><IonLabel>Band:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
+                  { isConnect? <IonChip color="primary">{band}</IonChip>:<IonChip color="danger">X</IonChip> }
                 </IonCol>
               </IonRow>
             </IonCardContent>
@@ -374,7 +393,7 @@ const SignalChecker: React.FC = () => {
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
       <IonAlert 
         isOpen={ summitCheck } 
-        message={ "Do you want to Summit Data?" } 
+        message="Do you want to Summit Data?"
         buttons={[
           { text: "Yes", handler: clearSummitCheck },
           { text: "No", handler: clearSummitCheck }
