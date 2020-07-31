@@ -39,7 +39,7 @@ const SignalChecker: React.FC = () => {
   const [ isConnect, setIsConnect ] = useState<boolean>(false);
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
-  const [ imei, setIMEI ] = useState<string>();
+  const [ imei, setIMEI ] = useState<string>( "0" );
   const [ imsi, setIMSI ] = useState<string>();
   const [ rssi, setRSSI ] = useState<string>();
   const [ rssiColor, setRSSIColor ] = useState<string>( 'dark' );
@@ -388,7 +388,7 @@ const SignalChecker: React.FC = () => {
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <MovingCheck destination={rpiDestination!} />
+        <MovingCheck destination={rpiDestination!} imei={ imei }/>
       </IonModal>
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
       <IonAlert 

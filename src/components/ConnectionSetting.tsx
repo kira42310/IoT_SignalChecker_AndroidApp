@@ -172,11 +172,11 @@ const ConnectionSetting: React.FC<{
           </IonItem>
         </IonCol>
       </IonRow>
-      <IonRow>
+      {/* <IonRow>
         <IonCol className="ion-margin-top">
           <IonButton onClick={rpiConnect} expand="full" size="large">Connect</IonButton>
         </IonCol>
-      </IonRow>
+      </IonRow> */}
       <IonRow>
         <IonCol className="ion-margin-top">
           <IonButton onClick={saveSetting} expand="full" size="large">Save & Connect</IonButton>

@@ -10,6 +10,7 @@ import {
   IonAlert,
   IonLoading,
   useIonViewWillEnter,
+  IonDatetime,
 } from "@ionic/react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
@@ -19,6 +20,7 @@ const { Geolocation, Storage } = Plugins;
 
 const MovingCheck: React.FC<{
   destination: string,
+  imei: string,
 }> = (props) => {
   const [mode, setMode] = useState<string>(AppSettings.MODE);
   const [band, setBand] = useState<string>(AppSettings.BAND);
@@ -30,11 +32,21 @@ const MovingCheck: React.FC<{
   const [ sinrColor, setSINRColor ] = useState<string>( "dark" );
   const [ rsrq, setRSRQ ] = useState<string>();
   const [ rsrqColor, setRSRQColor ] = useState<string>( "dark" );
+  const [ intervalHour, setIntervalHour ] = useState<string>( AppSettings.CHECK_INTERVAL_HOUR );
   const [ intervalMin, setIntervalMin ] = useState<string>( AppSettings.CHECK_INTERVAL_MIN );
   const [ intervalSec, setIntervalSec ] = useState<string>( AppSettings.CHECK_INTERVAL_SEC );
   const [ mapCenter, setMapCenter ] = useState<google.maps.LatLng>( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [errorConnection, setErrorConnection] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
+  const [ startStopBtn, setStartStopBtn ] = useState<boolean>(true);
+  const [ markers, setMarkers ] = useState<{
+    latitude: number, 
+    longitude: number, 
+    rssi: number, 
+    rsrp: number,
+    sinr: number,
+    rsrq: number,
+  }[]>([]);
 
   useEffect( () => {
     getLocation();
@@ -43,6 +55,22 @@ const MovingCheck: React.FC<{
   const getLocation = async () => {
     const tmp = await Geolocation.getCurrentPosition();
     setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+  };
+
+  const signalTracker = () => {
+    let trackerHandler;
+    console.log( trackerHandler );
+    // if(isTrack) {
+      // setIsTrack(false);
+      // setEnableBTN(true);
+    //   clearInterval(trackerHandler);
+    // }
+    // else{
+      // setIsTrack(true);
+      // setEnableBTN(false);
+      // trackerHandler = setInterval( () => {signalStrength()}, delay*1000);
+      // setTrackHandler(trackerHandler);
+    // }
   };
 
   const signalStrength = async () => {
@@ -62,29 +90,35 @@ const MovingCheck: React.FC<{
     setRSRQ(signalStrength[3]);
     setRSRQColor( AppSettings.getColorRsrq( signalStrength[3] ) );
     const position = await Geolocation.getCurrentPosition();
-    const dbOption = {
-      method: "POST",
-      headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-      body: JSON.stringify({
-        // imei: imei,
-        rssi: signalStrength[0],
-        rsrp: signalStrength[1],
-        sinr: signalStrength[2],
-        rsrq: signalStrength[3],
-        pcid: signalStrength[4],
-        mode: mode,
-        latitude: position?.coords.latitude,
-        longitude: position?.coords.longitude,
-      })
-    };
-
+    // const dbOption = {
+    //   method: "POST",
+    //   headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
+    //   body: JSON.stringify({
+    //     imei: props.imei,
+    //     rssi: signalStrength[0],
+    //     rsrp: signalStrength[1],
+    //     sinr: signalStrength[2],
+    //     rsrq: signalStrength[3],
+    //     pcid: signalStrength[4],
+    //     mode: mode,
+    //     latitude: position?.coords.latitude,
+    //     longitude: position?.coords.longitude,
+    //   })
+    // };
+    const tmp = { 
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      rssi: signalStrength[0],
+      };
+    // setMarkers();
+    
     // const result = await fetch(AppSettings.DB_LOCATION + "/insertdata", dbOption)
     //   .then((response) => response.json())
     //   .then((result) => { return result })
     //   .catch(error => console.log(error));
     // console.log(result);
     
-    setLoading(false);
+    // setLoading(false);
   };
 
   const clearErrorConnection = () => {
@@ -93,27 +127,34 @@ const MovingCheck: React.FC<{
 
   const containerStyle = {
     width: '100%',
-    height: '75%',
+    height: '80%',
   }
 
   return (
     <IonGrid fixed={ true }>
       <IonRow>
         <IonCol>
-          <IonButton onClick={ signalStrength } expand="full">Start Test</IonButton>
+          <IonButton disabled={ !startStopBtn } onClick={ signalStrength } expand="full">Start Test</IonButton>
+        </IonCol>
+        <IonCol>
+          <IonButton disabled={ startStopBtn }onClick={ signalStrength } expand="full">Stop Test</IonButton>
         </IonCol>
       </IonRow>
       <IonRow>
         <IonCol>
-          <IonLabel>Interval (Minutes)</IonLabel>
           <IonItem>
-            <IonInput type="number" min="0" value={ intervalMin } debounce={ 500 } onIonChange={ e => setIntervalMin( e.detail.value! ) } />
-          </IonItem>
-        </IonCol>
-        <IonCol>
-          <IonLabel>(Seconds)</IonLabel>
-          <IonItem>
-            <IonInput type="number" min="0" max="59" value={ intervalSec } debounce={ 500 } onIonChange={ e => setIntervalSec( e.detail.value! ) } />
+            <IonLabel>Interval [hh:mm:ss]</IonLabel>
+            <IonDatetime 
+              displayFormat="H:mm:ss" 
+              pickerFormat="H:mm:ss" 
+              value={ intervalHour + ":" + intervalMin + ":" + intervalSec + "Z" } 
+              onIonChange={ e => { 
+                // console.log(e.detail.value?.split(":")) 
+                const tmp = e.detail.value?.split(":");
+                setIntervalHour( tmp![0] );
+                setIntervalMin( tmp![1] );
+                setIntervalSec( tmp![2] );
+              }} />
           </IonItem>
         </IonCol>
       </IonRow>
