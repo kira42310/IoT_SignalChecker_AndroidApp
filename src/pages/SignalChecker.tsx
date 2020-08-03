@@ -356,13 +356,13 @@ const SignalChecker: React.FC = () => {
           <IonRow>
             <IonCol>
               {/* <IonButton onClick={ () => setStaticWindow( true ) } disabled={ !isConnect } expand="full">Static Test</IonButton> */}
-              <IonButton onClick={ () => setStaticWindow( true ) } expand="full">Static Test</IonButton>
+              <IonButton onClick={ () => setStaticWindow( true ) } expand="full">Auto Static Test</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               {/* <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Moving Test</IonButton> */}
-              <IonButton onClick={ () => { getLocation(); setMovingWindow( true ); }} expand="full">Moving Test</IonButton>
+              <IonButton onClick={ () => { getLocation(); setMovingWindow( true ); }} expand="full">Auto Moving Test</IonButton>
             </IonCol>
             {/* <IonCol>
               <IonItem>
@@ -372,7 +372,7 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Signal Check</IonButton>
+              <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Manual Test</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
