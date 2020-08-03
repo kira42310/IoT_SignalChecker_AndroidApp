@@ -19,7 +19,7 @@ import { AppSettings } from "../AppSettings"
 const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
-  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, rpiDestination: string) => void;
+  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, rpiDestination: string) => void;
 }> = (props) => {
   const [rpiIP, setRPiIP] = useState<string>(AppSettings.RPI_IP);
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
@@ -88,7 +88,7 @@ const ConnectionSetting: React.FC<{
       .then( (data) => { return data; })
     setLoading(false);
     if( result[0] === "F" ) { setErrorConnection("Cannot connect to Base!"); return ; }
-    props.onChangeIsConnect( result[0], result[1], result[2], result[3], rpiIP + ":" + rpiPort );
+    props.onChangeIsConnect( result[0], result[1], result[2], result[3], result[4], rpiIP + ":" + rpiPort );
   };
 
   const resetModule = async () => {

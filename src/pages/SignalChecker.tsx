@@ -51,6 +51,7 @@ const SignalChecker: React.FC = () => {
   const [ rsrqColor, setRSRQColor ] = useState<string>( 'dark' );
   const [ mode, setMode ] = useState<string>();
   const [ band, setBand ] = useState<string>();
+  const [ ip, setIP ] = useState<string>();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
   const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
@@ -117,6 +118,7 @@ const SignalChecker: React.FC = () => {
       setIMSI( data[1] );
       setMode( data[2] );
       setBand( data[3] );
+      setIP( data[4] );
     }
     else if( result === undefined ){
       clearInterval( timerId );
@@ -148,13 +150,14 @@ const SignalChecker: React.FC = () => {
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
-    if( res ){
+    if( res && res !== "F" ){
       setIsConnect( true );
       setToastRecon( false );
       setIMEI( res[0] );
       setIMSI( res[1] );
       setMode( res[2] );
       setBand( res[3] );
+      setIP( res[4] );
       setIntervalCheckConnect();
     }
     else{
@@ -225,12 +228,13 @@ const SignalChecker: React.FC = () => {
     }
   };
 
-  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, destination: string ) => {
+  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, ip: string, destination: string ) => {
     setIsConnect(true);
     setIMEI(imei);
     setIMSI(imsi);
     setMode(mode);
     setBand(band);
+    setIP(ip);
     setRPiDestination(destination);
     setConnectionWindow(false);
     setEnableBTN(true);
@@ -289,6 +293,12 @@ const SignalChecker: React.FC = () => {
                 <IonCol class="ion-align-self-center"><IonLabel>Band:</IonLabel></IonCol>
                 <IonCol class="ion-align-self-center">
                   { isConnect? <IonChip color="primary">{band}</IonChip>:<IonChip color="danger">X</IonChip> }
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol class="ion-align-self-center"><IonLabel>IP:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
+                  { isConnect? <IonChip color="primary">{ip}</IonChip>:<IonChip color="danger">X</IonChip> }
                 </IonCol>
               </IonRow>
             </IonCardContent>
