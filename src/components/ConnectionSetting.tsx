@@ -25,6 +25,7 @@ const ConnectionSetting: React.FC<{
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
   const [mode, setMode] = useState<string>(AppSettings.MODE);
   const [band, setBand] = useState<string>(AppSettings.BAND);
+  const [ apn, setAPNValue ] = useState<string>();
   const [errorConnection, setErrorConnection] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -104,6 +105,34 @@ const ConnectionSetting: React.FC<{
     else setErrorConnection( "Reset Fail" );
   };
 
+  const defaultValue = () => {
+    setMode( AppSettings.MODE );
+    setBand( AppSettings.BAND );
+    setRPiIP( AppSettings.RPI_IP );
+    setRPiPort( AppSettings.RPI_PORT );
+  };
+
+  const setAPN = async () => {
+    const ip = await Storage.get({ key: "rpiIP" });
+    const port = await Storage.get({ key: "rpiPort" });
+    if( !ip || !port ){
+      const ip = AppSettings.RPI_IP;
+      const port = AppSettings.RPI_PORT;
+    }
+    const url = ("http://" + ip + ":" + port + "/apnSetting?apn=" + apn );
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+
+    const res = await fetch( url, { signal })
+      .then( response => response.json() )
+      .then( data => { return data })
+      .catch( e => console.log(e) );
+    if( res === "P" ) setErrorConnection( "Set APN success" );
+    else if( res === "F" ) setErrorConnection( "Set APN Failed!" );
+    else setErrorConnection( "Connection to RPI Error" );
+  };
+
   const saveSetting = async () => {
     await Storage.set({ key: 'mode', value: mode });
     await Storage.set({ key: 'band', value: band });
@@ -179,12 +208,30 @@ const ConnectionSetting: React.FC<{
       </IonRow> */}
       <IonRow>
         <IonCol className="ion-margin-top">
-          <IonButton onClick={saveSetting} expand="full" size="large">Save & Connect</IonButton>
+          <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
         </IonCol>
       </IonRow>
       <IonRow>
         <IonCol className="ion-margin-top">
-          <IonButton onClick={ resetModule } expand="full" size="large">Reset Module</IonButton>
+          <IonButton onClick={ defaultValue } expand="full">Default Value</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={ resetModule } expand="full">Reset Module</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonLabel>Set APN</IonLabel>
+          <IonItem>
+            <IonInput value={ apn } debounce={ 500 }  onIonChange={ e => setAPNValue( e.detail.value! ) } />
+          </IonItem>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={ setAPN } expand="full">Set APN</IonButton>
         </IonCol>
       </IonRow>
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
