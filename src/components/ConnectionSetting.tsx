@@ -113,8 +113,8 @@ const ConnectionSetting: React.FC<{
   };
 
   const setAPN = async () => {
-    const ip = await Storage.get({ key: "rpiIP" });
-    const port = await Storage.get({ key: "rpiPort" });
+    const ip = await (await Storage.get({ key: "rpiIP" })).value;
+    const port = await (await Storage.get({ key: "rpiPort" })).value;
     if( !ip || !port ){
       const ip = AppSettings.RPI_IP;
       const port = AppSettings.RPI_PORT;
