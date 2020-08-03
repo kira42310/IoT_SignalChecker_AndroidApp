@@ -33,16 +33,22 @@ const ConnectionSetting: React.FC<{
     loadSetting();
   },[]);
 
-  const loadSetting = async () => {
-    const mode = await Storage.get({ key: 'mode' });
-    if( mode.value ){
-      const band = await Storage.get({ key: 'band' });
-      const ip = await Storage.get({ key: 'rpiIP' });
-      const port = await Storage.get({ key: 'rpiPort' });
-      setMode( mode.value );
-      setBand( band.value! );
-      setRPiIP( ip.value! );
-      setRPiPort( +port.value! );
+  const loadSetting = () => {
+    // const mode = await Storage.get({ key: 'mode' });
+    // if( mode.value ){
+    //   const band = await Storage.get({ key: 'band' });
+    //   const ip = await Storage.get({ key: 'rpiIP' });
+    //   const port = await Storage.get({ key: 'rpiPort' });
+    //   setMode( mode.value );
+    //   setBand( band.value! );
+    //   setRPiIP( ip.value! );
+    //   setRPiPort( +port.value! );
+    // }
+    if( sessionStorage.getItem( 'mode' )){
+      setMode( sessionStorage.getItem( 'mode' )! );
+      setBand( sessionStorage.getItem( 'band' )! );
+      setRPiIP( sessionStorage.getItem( 'rpiIP' )! );
+      setRPiPort( +sessionStorage.getItem( 'rpiPort' )! );
     }
   };
 
@@ -113,8 +119,8 @@ const ConnectionSetting: React.FC<{
   };
 
   const setAPN = async () => {
-    const ip = await (await Storage.get({ key: "rpiIP" })).value;
-    const port = await (await Storage.get({ key: "rpiPort" })).value;
+    const ip = sessionStorage.getItem( "rpiIP" );
+    const port = sessionStorage.getItem( "rpiPort" );
     if( !ip || !port ){
       const ip = AppSettings.RPI_IP;
       const port = AppSettings.RPI_PORT;
@@ -133,11 +139,11 @@ const ConnectionSetting: React.FC<{
     else setErrorConnection( "Connection to RPI Error" );
   };
 
-  const saveSetting = async () => {
-    await Storage.set({ key: 'mode', value: mode });
-    await Storage.set({ key: 'band', value: band });
-    await Storage.set({ key: 'rpiIP', value: rpiIP });
-    await Storage.set({ key: 'rpiPort', value: rpiPort.toString() });
+  const saveSetting = () => {
+    sessionStorage.setItem('mode', mode);
+    sessionStorage.setItem( 'band', band );
+    sessionStorage.setItem( 'rpiIP', rpiIP );
+    sessionStorage.setItem( 'rpiPort', rpiPort.toString() );
     rpiConnect();
   };
 

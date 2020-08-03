@@ -37,6 +37,7 @@ const { Geolocation, Storage } = Plugins;
 const SignalChecker: React.FC = () => {
 
   const [ isConnect, setIsConnect ] = useState<boolean>(false);
+  const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
   const [ imei, setIMEI ] = useState<string>( "0" );
@@ -69,6 +70,20 @@ const SignalChecker: React.FC = () => {
 
   useIonViewDidEnter( () => {
     setIntervalCheckConnect();
+    if( sessionStorage.getItem( 'rssi' ) ){
+      const rssi = sessionStorage.getItem( 'rssi' );
+      const rsrp = sessionStorage.getItem( 'rsrp' );
+      const sinr = sessionStorage.getItem( 'sinr' );
+      const rsrq = sessionStorage.getItem( 'rsrq' );
+      setRSSI( rssi! );
+      setRSSIColor( AppSettings.getColorRssiRsrp( +rssi! ));
+      setRSRP( rsrp! );
+      setRSRPColor( AppSettings.getColorRssiRsrp( +rsrp! ));
+      setSINR( sinr! );
+      setSINRColor( AppSettings.getColorSinr( +sinr! ));
+      setRSRQ( rsrq! );
+      setRSRQColor( AppSettings.getColorRsrq( +rsrq! ));
+    }
   });
 
   useIonViewWillLeave( () => {
@@ -76,12 +91,13 @@ const SignalChecker: React.FC = () => {
     setToastRecon( false );
   });
 
-  const getURL = async () => {
+  const getURL = () => {
     let url;
-    const ip = await Storage.get({ key: "rpiIP" });
-    const port = await Storage.get({ key: "rpiPort" });
-    if( ip.value ) { url = ip.value + ":" + port.value; }
+    const ip = sessionStorage.getItem( "rpiIP" );
+    const port = sessionStorage.getItem( "rpiPort" );
+    if( ip && port ) { url = ip + ":" + port; }
     else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
+    console.log( url );
     setRPiDestination( url );
     return url;
   };
@@ -109,6 +125,7 @@ const SignalChecker: React.FC = () => {
       .catch(( error ) => { console.log( error ); });
     if( result === true ){
       setIsConnect( true );
+      setColorStatus( 'success' );
       setToastRecon( false );
       const data = await fetch( "http://" + url + "/info" )
         .then(( response ) => response.json() )
@@ -120,9 +137,16 @@ const SignalChecker: React.FC = () => {
       setBand( data[3] );
       setIP( data[4] );
     }
+    else if( result === false ){
+      clearInterval( timerId );
+      setIsConnect( false );
+      setColorStatus( 'warning' );
+      setToastRecon( true );
+    }
     else if( result === undefined ){
       clearInterval( timerId );
       setIsConnect( false );
+      setColorStatus( 'danger' );
       setToastRecon( true );
     }
   };
@@ -131,27 +155,23 @@ const SignalChecker: React.FC = () => {
     setLoading( true );
     clearInterval( timerId );
     const url = await getURL();
-    const m = await Storage.get({ key: "mode" });
-    const b = await Storage.get({ key: "band" });
-    let modetmp,bandtmp;
-    if( m.value && b.value ){
-      modetmp = m.value;
-      bandtmp = b.value;
-    }
-    else{
-      modetmp = AppSettings.MODE;
-      bandtmp = AppSettings.BAND;
+    const m = sessionStorage.getItem( "mode" );
+    const b = sessionStorage.getItem( "band" );
+    if( !m && !b ){
+      const m = AppSettings.MODE;
+      const b = AppSettings.BAND;
     }
 
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
-    const res = await fetch( "http://" + url + "/connectBase?mode=" + modetmp + "&band=" + bandtmp, { signal } )
+    const res = await fetch( "http://" + url + "/connectBase?mode=" + m + "&band=" + b, { signal } )
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
     if( res && res !== "F" ){
       setIsConnect( true );
+      setColorStatus( 'success' );
       setToastRecon( false );
       setIMEI( res[0] );
       setIMSI( res[1] );
@@ -160,9 +180,15 @@ const SignalChecker: React.FC = () => {
       setIP( res[4] );
       setIntervalCheckConnect();
     }
-    else{
-      setToastRecon( true );
+    else if( res === "F" ){
       setIsConnect( false );
+      setColorStatus( 'warning' );
+      setToastRecon( true );
+    }
+    else{
+      setIsConnect( false );
+      setColorStatus( 'danger' );
+      setToastRecon( true );
     }
     setLoading( false );
   };
@@ -173,29 +199,47 @@ const SignalChecker: React.FC = () => {
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
-    const signalStrength = await fetch("http://" + rpiDestination + "/signalStrength", { signal })
+    const res = await fetch("http://" + rpiDestination + "/signalStrength", { signal })
       .then((response) => response.json())
       .then((data) => { return data })
-      .catch( () => { setIsConnect( false ); setError( "Connection to station fail"); } );
-    setRSSI(signalStrength[0]);
-    setRSSIColor( AppSettings.getColorRssiRsrp( signalStrength[0]  ) );
-    setRSRP(signalStrength[1]);
-    setRSRPColor( AppSettings.getColorRssiRsrp( signalStrength[1] ) );
-    setSINR(signalStrength[2]);
-    setSINRColor( AppSettings.getColorSinr( signalStrength[2] ) );
-    setRSRQ(signalStrength[3]);
-    setRSRQColor( AppSettings.getColorRsrq( signalStrength[3] ) );
+      .catch( e => { console.log(e) } );
+    if( res === "F" ){
+      setIsConnect( false );
+      setColorStatus( 'warning' );
+      setToastRecon( true );
+      setError( "Cannot Connect to Serving Cell" );
+      return;
+    }
+    else if( !res ){
+      setIsConnect( false );
+      setColorStatus( 'danger' );
+      setToastRecon( true );
+      setError( "Cannot Connect to RPi Device" );
+      return;
+    }
+    setRSSI(res[0]);
+    sessionStorage.setItem( "rssi", res[0])
+    setRSSIColor( AppSettings.getColorRssiRsrp( res[0]  ) );
+    setRSRP(res[1]);
+    sessionStorage.setItem( "rsrp", res[1])
+    setRSRPColor( AppSettings.getColorRssiRsrp( res[1] ) );
+    setSINR(res[2]);
+    sessionStorage.setItem( "sinr", res[2])
+    setSINRColor( AppSettings.getColorSinr( res[2] ) );
+    setRSRQ(res[3]);
+    sessionStorage.setItem( "rsrq", res[3])
+    setRSRQColor( AppSettings.getColorRsrq( res[3] ) );
     const position = await Geolocation.getCurrentPosition();
     const dbOption = {
       method: "POST",
       headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
       body: JSON.stringify({
         imei: imei,
-        rssi: signalStrength[0],
-        rsrp: signalStrength[1],
-        sinr: signalStrength[2],
-        rsrq: signalStrength[3],
-        pcid: signalStrength[4],
+        rssi: res[0],
+        rsrp: res[1],
+        sinr: res[2],
+        rsrq: res[3],
+        pcid: res[4],
         mode: mode,
         latitude: position?.coords.latitude,
         longitude: position?.coords.longitude,
@@ -230,6 +274,7 @@ const SignalChecker: React.FC = () => {
 
   const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, ip: string, destination: string ) => {
     setIsConnect(true);
+    setColorStatus( 'success' );
     setIMEI(imei);
     setIMSI(imsi);
     setMode(mode);
@@ -259,7 +304,7 @@ const SignalChecker: React.FC = () => {
       <IonHeader>
         <IonToolbar color="primary">
           <IonTitle>App Name</IonTitle>
-          <IonIcon color={ isConnect? "success" : "danger" } slot="secondary" size="large" icon={ ellipse } />
+          <IonIcon color={ colorStatus } slot="secondary" size="large" icon={ ellipse } />
           <IonButtons slot="end">
             <IonButton onClick={ () => setConnectionWindow(true) }>
               <IonIcon slot="icon-only" icon={ settings } />
