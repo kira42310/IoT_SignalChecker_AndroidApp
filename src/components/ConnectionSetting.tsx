@@ -140,7 +140,7 @@ const ConnectionSetting: React.FC<{
   };
 
   const saveSetting = () => {
-    sessionStorage.setItem('mode', mode);
+    sessionStorage.setItem( 'mode', mode);
     sessionStorage.setItem( 'band', band );
     sessionStorage.setItem( 'rpiIP', rpiIP );
     sessionStorage.setItem( 'rpiPort', rpiPort.toString() );

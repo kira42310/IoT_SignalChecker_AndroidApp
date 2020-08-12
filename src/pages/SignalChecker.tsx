@@ -16,8 +16,6 @@ import {
   IonChip,
   IonCard,
   IonCardContent,
-  IonInput,
-  IonItem,
   IonLoading,
   IonIcon,
   useIonViewDidEnter,
@@ -35,6 +33,41 @@ import { AppSettings } from "../AppSettings";
 const { Geolocation, Storage } = Plugins;
 
 const SignalChecker: React.FC = () => {
+
+  // const [ a, setA ] = useState<signalData>();
+  const [ signalData, setSignalData ] = useState<{[ key: string ]: string }>();
+  // let b: signalData;
+  const dataStructure = [ "scRSSI", "scRSRP", "scSINR", "scRSRQ", "scPCID", 
+    "n1RSSI", "n1RSRP", "n1SINR", "n1RSRQ", "n1PCID",
+    "n2RSSI", "n2RSRP", "n2SINR", "n2RSRQ", "n2PCID",
+    "n3RSSI", "n3RSRP", "n3SINR", "n3RSRQ", "n3PCID",
+  ];
+  // let c = { scRSSI: "0", scRSRP: "0", scSINR: "0", scRSRQ: "0", scPCID: "0", 
+  //   n1RSSI: "0", n1RSRP: "0", n1SINR: "0", n1RSRQ: "0", n1PCID: "0",
+  //   n2RSSI: "0", n2RSRP: "0", n2SINR: "0", n2RSRQ: "0", n2PCID: "0",
+  //   n3RSSI: "0", n3RSRP: "0", n3SINR: "0", n3RSRQ: "0", n3PCID: "0",
+  // };
+  const [ b, setB ] = useState<{ 
+    scRSSI: string,
+    scRSRP: string,
+    scSINR: string,
+    scRSRQ: string,
+    scPCID: string,
+    n1RSSI: string,
+    n1RSRP: string,
+    n1SINR: string,
+    n1RSRQ: string,
+    n1PCID: string,
+    n2RSSI: string,
+    n2RSRP: string,
+    n2SINR: string,
+    n2RSRQ: string,
+    n2PCID: string,
+    n3RSSI: string,
+    n3RSRP: string,
+    n3SINR: string,
+    n3RSRQ: string,
+    n3PCID: string, }>();
 
   const [ isConnect, setIsConnect ] = useState<boolean>(false);
   const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
@@ -57,6 +90,7 @@ const SignalChecker: React.FC = () => {
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
   const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
   const [ movingWindow, setMovingWindow ] = useState<boolean>(false);
+  const [ movingWindowClose, setMovingWindowClose ] = useState<boolean>( false );
   const [ isTrack, setIsTrack ] = useState<boolean>(false);
   // const [ trackHandler, setTrackHandler ] = useState<any>();
   const [ enableBTN, setEnableBTN ] = useState<boolean>(false);
@@ -97,7 +131,6 @@ const SignalChecker: React.FC = () => {
     const port = sessionStorage.getItem( "rpiPort" );
     if( ip && port ) { url = ip + ":" + port; }
     else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
-    console.log( url );
     setRPiDestination( url );
     return url;
   };
@@ -123,7 +156,7 @@ const SignalChecker: React.FC = () => {
       .then(( response ) => response.json() )
       .then(( data ) => { return data; })
       .catch(( error ) => { console.log( error ); });
-    if( result === true ){
+    if( result === "P" ){
       setIsConnect( true );
       setColorStatus( 'success' );
       setToastRecon( false );
@@ -137,7 +170,7 @@ const SignalChecker: React.FC = () => {
       setBand( data[3] );
       setIP( data[4] );
     }
-    else if( result === false ){
+    else if( result === "F" ){
       clearInterval( timerId );
       setIsConnect( false );
       setColorStatus( 'warning' );
@@ -169,6 +202,7 @@ const SignalChecker: React.FC = () => {
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
+    console.log(signal.aborted);
     if( res && res !== "F" ){
       setIsConnect( true );
       setColorStatus( 'success' );
@@ -207,44 +241,47 @@ const SignalChecker: React.FC = () => {
       setIsConnect( false );
       setColorStatus( 'warning' );
       setToastRecon( true );
+      setLoading( false );
       setError( "Cannot Connect to Serving Cell" );
       return;
     }
-    else if( !res ){
+    else if( signal.aborted ){
       setIsConnect( false );
       setColorStatus( 'danger' );
       setToastRecon( true );
+      setLoading( false );
       setError( "Cannot Connect to RPi Device" );
       return;
     }
-    setRSSI(res[0]);
-    sessionStorage.setItem( "rssi", res[0])
-    setRSSIColor( AppSettings.getColorRssiRsrp( res[0]  ) );
-    setRSRP(res[1]);
-    sessionStorage.setItem( "rsrp", res[1])
-    setRSRPColor( AppSettings.getColorRssiRsrp( res[1] ) );
-    setSINR(res[2]);
-    sessionStorage.setItem( "sinr", res[2])
-    setSINRColor( AppSettings.getColorSinr( res[2] ) );
-    setRSRQ(res[3]);
-    sessionStorage.setItem( "rsrq", res[3])
-    setRSRQColor( AppSettings.getColorRsrq( res[3] ) );
-    const position = await Geolocation.getCurrentPosition();
-    const dbOption = {
-      method: "POST",
-      headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-      body: JSON.stringify({
-        imei: imei,
-        rssi: res[0],
-        rsrp: res[1],
-        sinr: res[2],
-        rsrq: res[3],
-        pcid: res[4],
-        mode: mode,
-        latitude: position?.coords.latitude,
-        longitude: position?.coords.longitude,
-      })
-    };
+    setSignalData( res );
+    setRSSI(res['scRSSI']);
+    sessionStorage.setItem( "rssi", res['scRSSI'])
+    setRSSIColor( AppSettings.getColorRssiRsrp( res['scRSSI']  ) );
+    setRSRP(res['scRSRP']);
+    sessionStorage.setItem( "rsrp", res['scRSRP'])
+    setRSRPColor( AppSettings.getColorRssiRsrp( res['scRSRP'] ) );
+    setSINR(res['scSINR']);
+    sessionStorage.setItem( "sinr", res['scSINR'])
+    setSINRColor( AppSettings.getColorSinr( res['scSINR'] ) );
+    setRSRQ(res['scRSRQ']);
+    sessionStorage.setItem( "rsrq", res['scRSRQ'])
+    setRSRQColor( AppSettings.getColorRsrq( res['scRSRQ'] ) );
+    // const position = await Geolocation.getCurrentPosition();
+    // const dbOption = {
+    //   method: "POST",
+    //   headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
+    //   body: JSON.stringify({
+    //     imei: imei,
+    //     rssi: res[0],
+    //     rsrp: res[1],
+    //     sinr: res[2],
+    //     rsrq: res[3],
+    //     pcid: res[4],
+    //     mode: mode,
+    //     latitude: position?.coords.latitude,
+    //     longitude: position?.coords.longitude,
+    //   })
+    // };
 
     // const result = await fetch(AppSettings.DB_LOCATION + "/insertdata", dbOption)
     //   .then((response) => response.json())
@@ -291,8 +328,31 @@ const SignalChecker: React.FC = () => {
     setError("");
   };
 
-  const clearSummitCheck = () => {
+  const manaulSummitYes = () => {
+    signalStrength();
     setSummitCheck( false );
+    //summit data function **To Do**
+  };
+
+  const manaulSummitNo = () => {
+    signalStrength();
+    setSummitCheck( false );
+  };
+
+  const setConnection = () => {
+
+  };
+
+  const onAutoTest = ( tname: string ) => {
+    if( tname === "moving" ){
+      setMovingWindowClose( true );
+    }
+  };
+
+  const offAutoTest = ( tname: string ) => {
+    if( tname === "moving" ){
+      setMovingWindowClose( false );
+    }
   };
 
   const tmpRecon = () => {
@@ -372,7 +432,8 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Manual Test</IonButton>
+              {/* <IonButton onClick={ signalStrength } disabled={ !isConnect } expand="full">Manual Test</IonButton> */}
+              <IonButton onClick={ () => setSummitCheck( true ) } disabled={ !isConnect } expand="full">Manual Test</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
@@ -401,6 +462,7 @@ const SignalChecker: React.FC = () => {
           </IonRow>
         </IonGrid>
       </IonContent>
+
       <IonModal isOpen={connectionWindow}>
         <IonHeader translucent>
           <IonToolbar>
@@ -412,6 +474,7 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <ConnectionSetting onChangeIsConnect={changeIsConnect}/>
       </IonModal>
+
       <IonModal isOpen={pingWindow}>
         <IonHeader translucent>
           <IonToolbar>
@@ -423,6 +486,7 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <PingSection destination={rpiDestination!} />
       </IonModal>
+
       <IonModal isOpen={ staticWindow }>
         <IonHeader translucent>
           <IonToolbar>
@@ -434,26 +498,34 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <StaticCheck destination={rpiDestination!} />
       </IonModal>
+
       <IonModal isOpen={ movingWindow }>
         <IonHeader translucent>
           <IonToolbar>
             <IonTitle>Moving Test</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={ () => setMovingWindow(false) }>Close</IonButton>
+              <IonButton disabled={ movingWindowClose } onClick={ () => setMovingWindow(false) }>Close</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <MovingCheck destination={rpiDestination!} imei={ imei }/>
+        <MovingCheck
+          setConnection={ setConnection }
+          onAutoTest={ onAutoTest }
+          offAutoTest={ offAutoTest }
+          url={ rpiDestination! } 
+          imei={ imei }/>
       </IonModal>
+
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
       <IonAlert 
         isOpen={ summitCheck } 
         message="Do you want to Summit Data?"
         buttons={[
-          { text: "Yes", handler: clearSummitCheck },
-          { text: "No", handler: clearSummitCheck }
+          { text: "Yes", handler: manaulSummitYes },
+          { text: "No", handler: manaulSummitNo }
         ]}
       />
+
       <IonToast 
         isOpen={ toastRecon } 
         cssClass="tabs-bottom"

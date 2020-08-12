@@ -1,55 +1,59 @@
-import React, { useState, useEffect,} from "react";
+import React, { useState, useEffect, useRef, } from "react";
 import {
   IonLabel,
   IonGrid,
   IonRow,
   IonCol,
   IonItem,
-  IonInput,
   IonButton,
   IonAlert,
   IonLoading,
-  useIonViewWillEnter,
-  IonDatetime,
+  IonInput,
+  IonIcon,
 } from "@ionic/react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
-import { Plugins } from "@capacitor/core";
+import { Plugins, GeolocationPosition } from "@capacitor/core";
+import { trash } from "ionicons/icons"
 import { AppSettings } from "../AppSettings"
 
-const { Geolocation, Storage } = Plugins;
+const { Geolocation, } = Plugins;
+
+interface markerInterface {
+  id: number,
+  latitude: number, 
+  longitude: number, 
+  scRSSI: number, 
+  scRSRP: number,
+  scSINR: number,
+  scRSRQ: number, 
+}
 
 const MovingCheck: React.FC<{
-  destination: string,
+  setConnection: () => void,
+  onAutoTest: ( tname: string ) => void,
+  offAutoTest: ( tname: string ) => void,
+  url: string,
   imei: string,
 }> = (props) => {
-  const [mode, setMode] = useState<string>(AppSettings.MODE);
-  const [band, setBand] = useState<string>(AppSettings.BAND);
-  const [ rssi, setRSSI ] = useState<string>();
-  const [ rssiColor, setRSSIColor ] = useState<string>( "dark" );
-  const [ rsrp, setRSRP ] = useState<string>();
-  const [ rsrpColor, setRSRPColor ] = useState<string>( "dark" );
-  const [ sinr, setSINR ] = useState<string>();
-  const [ sinrColor, setSINRColor ] = useState<string>( "dark" );
-  const [ rsrq, setRSRQ ] = useState<string>();
-  const [ rsrqColor, setRSRQColor ] = useState<string>( "dark" );
+
   const [ intervalHour, setIntervalHour ] = useState<string>( AppSettings.CHECK_INTERVAL_HOUR );
   const [ intervalMin, setIntervalMin ] = useState<string>( AppSettings.CHECK_INTERVAL_MIN );
   const [ intervalSec, setIntervalSec ] = useState<string>( AppSettings.CHECK_INTERVAL_SEC );
   const [ mapCenter, setMapCenter ] = useState<google.maps.LatLng>( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
-  const [errorConnection, setErrorConnection] = useState<string>();
-  const [loading, setLoading] = useState<boolean>(false);
+  const [ errorConnection, setErrorConnection ] = useState<string>();
+  const [ loading, setLoading ] = useState<boolean>(false);
   const [ startStopBtn, setStartStopBtn ] = useState<boolean>(true);
-  const [ markers, setMarkers ] = useState<{
-    latitude: number, 
-    longitude: number, 
-    rssi: number, 
-    rsrp: number,
-    sinr: number,
-    rsrq: number,
-  }[]>([]);
+  const [ startTestAlert, setStartTestAlert ] = useState<boolean>(false);
+  const [ update, setUpdate ] = useState(0);
+  const markers = useRef<markerInterface[]>([]);
+  const trackerInterval = useRef<any>( 0 );
 
   useEffect( () => {
     getLocation();
+    if( sessionStorage.getItem( 'movingTestMarker' ) ){
+      markers.current = JSON.parse( sessionStorage.getItem( 'movingTestMarker' )! );
+    }
+    return ( () => clearInterval( trackerInterval.current ) );
   },[]);
 
   const getLocation = async () => {
@@ -57,72 +61,72 @@ const MovingCheck: React.FC<{
     setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
   };
 
-  const signalTracker = () => {
-    let trackerHandler;
-    console.log( trackerHandler );
-    // if(isTrack) {
-      // setIsTrack(false);
-      // setEnableBTN(true);
-    //   clearInterval(trackerHandler);
-    // }
-    // else{
-      // setIsTrack(true);
-      // setEnableBTN(false);
-      // trackerHandler = setInterval( () => {signalStrength()}, delay*1000);
-      // setTrackHandler(trackerHandler);
-    // }
-  };
-
-  const signalStrength = async () => {
+  const signalStrength = async ( insertDB: boolean ) => {
     setLoading(true);
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
-    const signalStrength = await fetch("http://" + props.destination + "/signalStrength", { signal })
+    const res = await fetch("http://" + props.url + "/signalStrength", { signal })
       .then((response) => response.json())
       .then((data) => { return data });
-    setRSSI(signalStrength[0]);
-    setRSSIColor( AppSettings.getColorRssiRsrp( signalStrength[0]  ) );
-    setRSRP(signalStrength[1]);
-    setRSRPColor( AppSettings.getColorRssiRsrp( signalStrength[1] ) );
-    setSINR(signalStrength[2]);
-    setSINRColor( AppSettings.getColorSinr( signalStrength[2] ) );
-    setRSRQ(signalStrength[3]);
-    setRSRQColor( AppSettings.getColorRsrq( signalStrength[3] ) );
-    const position = await Geolocation.getCurrentPosition();
-    // const dbOption = {
-    //   method: "POST",
-    //   headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-    //   body: JSON.stringify({
-    //     imei: props.imei,
-    //     rssi: signalStrength[0],
-    //     rsrp: signalStrength[1],
-    //     sinr: signalStrength[2],
-    //     rsrq: signalStrength[3],
-    //     pcid: signalStrength[4],
-    //     mode: mode,
-    //     latitude: position?.coords.latitude,
-    //     longitude: position?.coords.longitude,
-    //   })
-    // };
-    const tmp = { 
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      rssi: signalStrength[0],
-      };
-    // setMarkers();
+    if( res === "F" ){
+      setErrorConnection('Cannot connect to serving Cell');
+      stopTest();
+      return;
+    }
+    else if( signal.aborted ){
+      setErrorConnection('Cannot connect to RPi');
+      stopTest();
+      return;
+    }
+    const location = await Geolocation.getCurrentPosition();
     
-    // const result = await fetch(AppSettings.DB_LOCATION + "/insertdata", dbOption)
-    //   .then((response) => response.json())
-    //   .then((result) => { return result })
-    //   .catch(error => console.log(error));
-    // console.log(result);
+    markers.current = [ ...markers.current, convertToMarkerData( res, location)];
+
+    if( insertDB ){
+
+    }
     
-    // setLoading(false);
+    setLoading(false);
+  };
+
+  const startTest = ( insertDB: boolean = false ) => {
+    setStartTestAlert( false );
+    props.onAutoTest( "moving" );
+    setStartStopBtn( false );
+    const itv: number = ( +( intervalHour ) * 3600000 ) + ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
+    signalStrength( insertDB )
+    const id = setInterval( () => signalStrength( insertDB ) , itv );
+    trackerInterval.current = id;
+  };
+
+  const stopTest = () => {
+    clearInterval( trackerInterval.current );
+    sessionStorage.setItem( 'movingTestMarker', JSON.stringify( markers.current ) );
+    props.offAutoTest( "moving" );
+    setStartStopBtn( true );
+  };
+
+  const convertToMarkerData = ( data: any, location: GeolocationPosition ): markerInterface => {
+    return { 
+      'id': Date.now(),
+      'latitude': location.coords.latitude, 
+      'longitude': location.coords.longitude, 
+      'scRSSI': data['scRSSI'],
+      'scRSRP': data['scRSRP'],
+      'scSINR': data['scSINR'],
+      'scRSRQ': data['scRSRQ']
+     }
   };
 
   const clearErrorConnection = () => {
     setErrorConnection("");
+  };
+
+  const clearMarker = () => {
+    markers.current = markers.current.filter( m => m.id === 0 );
+    sessionStorage.removeItem('movingTestMarker')
+    setUpdate( update + 1)
   };
 
   const containerStyle = {
@@ -130,39 +134,97 @@ const MovingCheck: React.FC<{
     height: '80%',
   }
 
+  const convertDataToIcon = ( data: number ) => {
+    return createPinSymbol( AppSettings.getColorRssiRsrp( data ) );
+  };
+
+  function createPinSymbol( color: string ) {
+    return {
+      path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: '#000',
+      strokeWeight: 2,
+      scale: 1
+    };
+  }
+
   return (
     <IonGrid fixed={ true }>
       <IonRow>
-        <IonCol>
-          <IonButton disabled={ !startStopBtn } onClick={ signalStrength } expand="full">Start Test</IonButton>
+        <IonCol size="5">
+          <IonButton disabled={ !startStopBtn } onClick={ () => setStartTestAlert( true ) } expand="full">Start Test</IonButton>
         </IonCol>
-        <IonCol>
-          <IonButton disabled={ startStopBtn }onClick={ signalStrength } expand="full">Stop Test</IonButton>
+        <IonCol size="5">
+          <IonButton disabled={ startStopBtn } onClick={ stopTest } expand="full">Stop Test</IonButton>
+        </IonCol>
+        <IonCol size="2">
+          <IonButton disabled={ !startStopBtn } onClick={ () => clearMarker() }  expand="full" >
+            <IonIcon slot="icon-only" icon={ trash } />
+          </IonButton>
         </IonCol>
       </IonRow>
       <IonRow>
         <IonCol>
+          <IonLabel>Interval Hour(s)</IonLabel>
           <IonItem>
-            <IonLabel>Interval [hh:mm:ss]</IonLabel>
-            <IonDatetime 
-              displayFormat="H:mm:ss" 
-              pickerFormat="H:mm:ss" 
-              value={ intervalHour + ":" + intervalMin + ":" + intervalSec + "Z" } 
-              onIonChange={ e => { 
-                // console.log(e.detail.value?.split(":")) 
-                const tmp = e.detail.value?.split(":");
-                setIntervalHour( tmp![0] );
-                setIntervalMin( tmp![1] );
-                setIntervalSec( tmp![2] );
-              }} />
+            <IonInput disabled={ !startStopBtn } 
+              value={ intervalHour } 
+              debounce={ 500 } 
+              type="tel"
+              minlength={ 0 }
+              maxlength={ 2 }
+              onIonChange={ e => setIntervalHour( e.detail.value! )} 
+            />
+          </IonItem>
+        </IonCol>
+        <IonCol>
+          <IonLabel>Minute(s)</IonLabel>
+          <IonItem>
+            <IonInput disabled={ !startStopBtn } 
+              value={ intervalMin } 
+              debounce={ 500 } 
+              type="tel"
+              minlength={ 0 }
+              maxlength={ 2 }
+              onIonChange={ e => setIntervalMin( e.detail.value! )} 
+            />
+          </IonItem>
+        </IonCol>
+        <IonCol>
+          <IonLabel>Second(s)</IonLabel>
+          <IonItem>
+            <IonInput disabled={ !startStopBtn } 
+              value={ intervalSec } 
+              type="tel"
+              minlength={ 0 }
+              maxlength={ 2 }
+              onIonChange={ e => setIntervalSec( e.detail.value! )}
+            />
           </IonItem>
         </IonCol>
       </IonRow>
       <GoogleMap mapContainerStyle={ containerStyle } 
         center={ mapCenter }
         zoom={14}>
-        {/* <Marker /> */}
+        {
+          markers.current.map( data => (
+            <Marker key={ data.id } 
+              position={{ lat: data.latitude, lng: data.longitude }} 
+              options={{ icon: convertDataToIcon( data['scRSSI'] ) }}
+            />
+          ))
+        }
       </GoogleMap>
+
+      <IonAlert 
+        isOpen={ startTestAlert }
+        message={ 'Do you want to insert data to Database?' }
+        buttons={[
+          { text: "Yes", handler: () => startTest( true ) },
+          { text: "No", handler: () => startTest( false ) }
+        ]}
+      />
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
       <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
     </IonGrid>
