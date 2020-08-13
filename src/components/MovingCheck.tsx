@@ -13,8 +13,8 @@ import {
 } from "@ionic/react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
-import { trash } from "ionicons/icons"
-import { AppSettings } from "../AppSettings"
+import { trash } from "ionicons/icons";
+import { AppSettings } from "../AppSettings";
 
 const { Geolocation, } = Plugins;
 
@@ -33,7 +33,6 @@ const MovingCheck: React.FC<{
   onAutoTest: ( tname: string ) => void,
   offAutoTest: ( tname: string ) => void,
   url: string,
-  imei: string,
 }> = (props) => {
 
   const [ intervalHour, setIntervalHour ] = useState<string>( AppSettings.CHECK_INTERVAL_HOUR );
@@ -61,7 +60,7 @@ const MovingCheck: React.FC<{
     setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
   };
 
-  const signalStrength = async ( insertDB: boolean ) => {
+  const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
     const controller = new AbortController();
     const signal = controller.signal;
@@ -126,7 +125,7 @@ const MovingCheck: React.FC<{
   const clearMarker = () => {
     markers.current = markers.current.filter( m => m.id === 0 );
     sessionStorage.removeItem('movingTestMarker')
-    setUpdate( update + 1)
+    setUpdate( update + 1 )
   };
 
   const containerStyle = {
@@ -166,7 +165,7 @@ const MovingCheck: React.FC<{
       </IonRow>
       <IonRow>
         <IonCol>
-          <IonLabel>Interval Hour(s)</IonLabel>
+          <IonLabel>Hour(s)</IonLabel>
           <IonItem>
             <IonInput disabled={ !startStopBtn } 
               value={ intervalHour } 

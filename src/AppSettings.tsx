@@ -17,7 +17,7 @@ export class AppSettings {
   public static CHECK_INTERVAL_SEC: string = "00";
 
   public static getColorRssiRsrp( data: number ): string  {
-    if( data >= -80 ) return "blue"
+    if( data >= -80  && data < 0) return "blue"
     else if( data < -80 && data >= -90 ) return "aqua"
     else if( data < -90 && data >= -95 ) return "darkgreen"
     else if( data < -95 && data >= -100 ) return "greenyellow"
@@ -34,16 +34,16 @@ export class AppSettings {
     if( data < 15 && data >= 10 ) return "goldenrod"
     if( data < 10 && data >= 5 ) return "cornflowerblue"
     if( data < 5 && data >= 0 ) return "orchid"
-    if( data < 0 ) return "gray"
+    if( data < 0 ) return "grey"
     else return "black"
   };
 
   public static getColorRsrq( data: number ): string {
-    if( data >= -6 ) return "purple"
+    if( data >= -6 && data < 0) return "purple"
     if( data < -6 && data >= -9 ) return "hotpink"
     if( data < -9 && data >= -11 ) return "cornflowerblue"
     if( data < -11 && data >= -14 ) return "orchid"
-    if( data < -14 ) return "gray"
+    if( data < -14 ) return "grey"
     else return "black"
   };
 }

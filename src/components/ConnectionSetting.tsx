@@ -14,7 +14,7 @@ import {
   useIonViewWillEnter,
 } from "@ionic/react";
 import { Plugins } from "@capacitor/core";
-import { AppSettings } from "../AppSettings"
+import { AppSettings } from "../AppSettings";
 
 const { Storage } = Plugins;
 

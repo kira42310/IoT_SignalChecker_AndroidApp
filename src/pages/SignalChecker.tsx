@@ -496,7 +496,12 @@ const SignalChecker: React.FC = () => {
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <StaticCheck destination={rpiDestination!} />
+        <StaticCheck 
+          setConnection={ setConnection }
+          onAutoTest={ onAutoTest }
+          offAutoTest={ offAutoTest }
+          url={ rpiDestination! } 
+        />
       </IonModal>
 
       <IonModal isOpen={ movingWindow }>
@@ -513,7 +518,7 @@ const SignalChecker: React.FC = () => {
           onAutoTest={ onAutoTest }
           offAutoTest={ offAutoTest }
           url={ rpiDestination! } 
-          imei={ imei }/>
+        />
       </IonModal>
 
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
