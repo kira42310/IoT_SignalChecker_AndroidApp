@@ -15,6 +15,7 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
 import { trash } from "ionicons/icons";
 import { AppSettings } from "../AppSettings";
+import { signalDataInterface } from "../AppFunction";
 
 const { Geolocation, } = Plugins;
 
@@ -29,9 +30,10 @@ interface markerInterface {
 }
 
 const MovingCheck: React.FC<{
-  setConnection: () => void,
+  Disconnect: ( res: string) => void,
   onAutoTest: ( tname: string ) => void,
   offAutoTest: ( tname: string ) => void,
+  insertDB: ( lat: number, lng: number, d: signalDataInterface ) => void,
   url: string,
 }> = (props) => {
 
@@ -71,11 +73,13 @@ const MovingCheck: React.FC<{
     if( res === "F" ){
       setErrorConnection('Cannot connect to serving Cell');
       stopTest();
+      props.Disconnect("F");
       return;
     }
     else if( signal.aborted ){
       setErrorConnection('Cannot connect to RPi');
       stopTest();
+      props.Disconnect("D");
       return;
     }
     const location = await Geolocation.getCurrentPosition();
@@ -83,7 +87,7 @@ const MovingCheck: React.FC<{
     markers.current = [ ...markers.current, convertToMarkerData( res, location)];
 
     if( insertDB ){
-
+      props.insertDB( location.coords.latitude, location.coords.longitude, res );
     }
     
     setLoading(false);

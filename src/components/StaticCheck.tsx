@@ -24,9 +24,10 @@ import { signalDataInterface, signalColorInterface } from "../AppFunction";
 const { Geolocation, } = Plugins;
 
 const StaticCheck: React.FC<{
-  setConnection: () => void,
+  Disconnect: ( res: string) => void,
   onAutoTest: ( tname: string ) => void,
   offAutoTest: ( tname: string ) => void,
+  insertDB: ( lat: number, lng: number, d: signalDataInterface ) => void,
   url: string,
 }> = (props) => {
   const [ intervalHour, setIntervalHour ] = useState<string>( AppSettings.CHECK_INTERVAL_HOUR );
@@ -36,6 +37,7 @@ const StaticCheck: React.FC<{
   const [ signalColor, setSignalColor ] = useState<signalColorInterface>();
   const [ startStopBtn, setStartStopBtn ] = useState<boolean>( true );
   const [ startTestAlert, setStartTestAlert ] = useState<boolean>( false );
+  const [ insertData, setInsertData ] = useState<boolean>( false );
   const [ errorConnection, setErrorConnection ] = useState<string>();
   const [ loading, setLoading ] = useState<boolean>(false);
   const trackerInterval = useRef<any>( 0 );
@@ -77,7 +79,7 @@ const StaticCheck: React.FC<{
     return ( () => clearInterval( trackerInterval.current ) );
   }, []);
 
-  const signalStrength = async ( insertDB: boolean = false ) => {
+  const signalStrength = async () => {
     setLoading(true);
     const controller = new AbortController();
     const signal = controller.signal;
@@ -88,21 +90,18 @@ const StaticCheck: React.FC<{
     if( res === "F" ){
       setErrorConnection('Cannot connect to serving Cell');
       stopTest();
+      props.Disconnect("F");
       return;
     }
     else if( signal.aborted ){
       setErrorConnection('Cannot connect to RPi');
       stopTest();
+      props.Disconnect("D");
       return;
     }
-    // const location = await Geolocation.getCurrentPosition();
     const tmp: signalDataInterface = prepareDataAndAverage( res );
     setData( tmp );
     setSignalColor( convertSignalToColor( tmp ));
-      
-    if( insertDB ){
-  
-    }
     
     setLoading(false);
   };
@@ -111,22 +110,27 @@ const StaticCheck: React.FC<{
     setStartTestAlert( false );
     props.onAutoTest( "static" );
     setStartStopBtn( false );
-    averageCounter.current = 0;
+    clearMeasure();
+    setInsertData( insertDB )
     const itv: number = ( +( intervalHour ) * 3600000 ) + ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
-    signalStrength( insertDB )
-    const id = setInterval( () => signalStrength( insertDB ) , itv );
+    signalStrength()
+    const id = setInterval( () => signalStrength() , itv );
     trackerInterval.current = id;
   };
 
-  const stopTest = () => {
+  const stopTest = async () => {
     clearInterval( trackerInterval.current );
+    if( insertData && data !== null ) {
+      const location = await Geolocation.getCurrentPosition();
+      props.insertDB( location.coords.latitude, location.coords.longitude, data );
+      setInsertData( false );
+    }
     sessionStorage.setItem( 'staticTestData', JSON.stringify( data ) );
     props.offAutoTest( "static" );
     setStartStopBtn( true );
   };
 
   const prepareDataAndAverage = ( newData: any ): signalDataInterface => {
-    console.log( newData );
     averageCounter.current += 1;
     const n1: string[] = select1stNeighbor( newData );
     const n2: string[] = select2ndNeighbor( newData );
@@ -139,7 +143,6 @@ const StaticCheck: React.FC<{
     n1Previous.current = { 'rssi': n1[0], 'rsrp': n1[1], 'sinr': n1[2], 'rsrq': n1[3], 'pcid': n1[4] };
     n2Previous.current = { 'rssi': n2[0], 'rsrp': n2[1], 'sinr': n2[2], 'rsrq': n2[3], 'pcid': n2[4] };
     n3Previous.current = { 'rssi': n3[0], 'rsrp': n3[1], 'sinr': n3[2], 'rsrq': n3[3], 'pcid': n3[4] };
-    // neighborPrevious.current = { 'n1PCID': n1[4], 'n2PCID': n2[4], 'n3PCID': n3[4] };
     return {
       "scRSSI": rssi,
       "scRSRP": rsrp,
@@ -169,7 +172,6 @@ const StaticCheck: React.FC<{
   };
 
   const select1stNeighbor = ( d: any ): string[] => {
-    console.log( n1Previous.current );
     if( n1Previous.current === null ) return [ 
       String(d['n1RSSI']), 
       String(d['n1RSRP']), 
@@ -177,13 +179,13 @@ const StaticCheck: React.FC<{
       String(d['n1RSRQ']), 
       String(d['n1PCID']) 
     ];
-    if( n1Previous.current.pcid !== "0" ) {console.log('n1');return [ 
+    if( n1Previous.current.pcid !== "0" ) return [ 
       n1Previous.current.rssi, 
       n1Previous.current.rsrp,
       n1Previous.current.sinr, 
       n1Previous.current.rsrq,
       n1Previous.current.pcid,
-    ];}
+    ];
     let i: number;
     for( i = 1; i <= 3; ++i ){
       if( String(d['n'+i+'PCID']) === "0" ) continue;
@@ -202,7 +204,6 @@ const StaticCheck: React.FC<{
   };
 
   const select2ndNeighbor = ( d: any ): string[] => {
-    console.log( n2Previous.current );
     if( n2Previous.current === null ) return [ 
       String(d['n2RSSI']), 
       String(d['n2RSRP']), 
@@ -210,13 +211,13 @@ const StaticCheck: React.FC<{
       String(d['n2RSRQ']), 
       String(d['n2PCID']) 
     ];
-    if( n2Previous.current.pcid !== "0" ) { console.log('n2');return [ 
+    if( n2Previous.current.pcid !== "0" ) return [ 
       n2Previous.current.rssi, 
       n2Previous.current.rsrp,
       n2Previous.current.sinr, 
       n2Previous.current.rsrq,
       n2Previous.current.pcid,
-    ];}
+    ];
     let i: number;
     for( i = 1; i <= 3; ++i ){
       if( String(d['n'+i+'PCID']) === "0" ) continue;
@@ -235,7 +236,6 @@ const StaticCheck: React.FC<{
   };
 
   const select3rdNeighbor = ( d: any ): string[] => {
-    console.log( n3Previous.current );
     if( n3Previous.current === null ) return [ 
       String(d['n3RSSI']), 
       String(d['n3RSRP']), 
@@ -243,13 +243,13 @@ const StaticCheck: React.FC<{
       String(d['n3RSRQ']), 
       String(d['n3PCID']) 
     ];
-    if( n3Previous.current.pcid !== "0" ){console.log('n3'); return [       
+    if( n3Previous.current.pcid !== "0" ) return [       
       n3Previous.current.rssi, 
       n3Previous.current.rsrp,
       n3Previous.current.sinr, 
       n3Previous.current.rsrq,
       n3Previous.current.pcid,
-    ];}
+    ];
     let i: number;
     for( i = 1; i <= 3; ++i ){
       if( String(d['n'+i+'PCID']) === "0" ) continue;

@@ -47,17 +47,30 @@ export class AppFunction {
   static timeoutID: any;
   static controller: any;
 
-  public static measureSignalStrength( url: string ): any {
+  public static async measureSignalStrength( url: string ): Promise<any> {
     this.controller.abort();
     clearTimeout( this.timeoutID );
     this.controller = new AbortController();
     const signal = this.controller.signal;
     this.timeoutID = setTimeout( () => this.controller.abort(), AppSettings.CONNECT_TIMEOUT );
-    const res = fetch( url, { signal })
+    const res = await fetch( url, { signal })
       .then( response => response.json() )
       .then( data => { return data })
       .catch( error => console.log( error ) );
     console.log( res );
+    return res;
+  }
+
+  public static async disableModule( url: string ): Promise<boolean> {
+    this.controller.abort();
+    clearTimeout( this.timeoutID );
+    this.controller = new AbortController();
+    const signal = this.controller.signal;
+    this.timeoutID = setTimeout( () => this.controller.abort(), AppSettings.CONNECT_TIMEOUT );
+    const res = await fetch( "http://"+url+"/disable", { signal })
+      .then( response => response.json() )
+      .then( data => { return data })
+      .catch( error => console.log( error ));
     return res;
   }
 

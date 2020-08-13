@@ -11,12 +11,8 @@ import {
   IonButton,
   IonAlert,
   IonLoading,
-  useIonViewWillEnter,
 } from "@ionic/react";
-import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
-
-const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
   onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, rpiDestination: string) => void;
@@ -34,16 +30,6 @@ const ConnectionSetting: React.FC<{
   },[]);
 
   const loadSetting = () => {
-    // const mode = await Storage.get({ key: 'mode' });
-    // if( mode.value ){
-    //   const band = await Storage.get({ key: 'band' });
-    //   const ip = await Storage.get({ key: 'rpiIP' });
-    //   const port = await Storage.get({ key: 'rpiPort' });
-    //   setMode( mode.value );
-    //   setBand( band.value! );
-    //   setRPiIP( ip.value! );
-    //   setRPiPort( +port.value! );
-    // }
     if( sessionStorage.getItem( 'mode' )){
       setMode( sessionStorage.getItem( 'mode' )! );
       setBand( sessionStorage.getItem( 'band' )! );
@@ -207,11 +193,6 @@ const ConnectionSetting: React.FC<{
           </IonItem>
         </IonCol>
       </IonRow>
-      {/* <IonRow>
-        <IonCol className="ion-margin-top">
-          <IonButton onClick={rpiConnect} expand="full" size="large">Connect</IonButton>
-        </IonCol>
-      </IonRow> */}
       <IonRow>
         <IonCol className="ion-margin-top">
           <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
