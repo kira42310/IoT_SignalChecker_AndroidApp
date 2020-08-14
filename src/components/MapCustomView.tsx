@@ -1,10 +1,11 @@
 import React from "react";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker, } from "@react-google-maps/api";
 
 const MapCustomView: React.FC<{
   latitude: number,
   longtitude: number,
 }> = (props) => {
+
 
   const containerStyle = {
     width: '100%',

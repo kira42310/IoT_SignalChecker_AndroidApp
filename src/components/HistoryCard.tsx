@@ -1,23 +1,12 @@
 import React from "react";
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from "@ionic/react";
 import MapCustomView from "./MapCustomView";
-// import { AppSettings } from "../AppSettings"
+import { retriveDataFromDBInterface } from "../AppFunction";
 
-const HistoryCard: React.FC<{
-  imei: string,
-  rssi: string,
-  rsrp: string,
-  sinr: string,
-  rsrq: string,
-  pcid: string,
-  mode: string,
-  date: Date,
-  lat: number,
-  lng: number
-}> = (props) => {
+const HistoryCard: React.FC<{ data: retriveDataFromDBInterface }> = (props) => {
 
   const timestampConverter = () => {
-    const rawData = new Date(props.date);
+    const rawData = new Date(props.data.date.$date);
     return (
       rawData.getDate()+"/"
       +rawData.getMonth()+"/"
@@ -33,12 +22,13 @@ const HistoryCard: React.FC<{
         <IonGrid>
           <IonRow>
             <IonCol size="4">
-              <MapCustomView latitude={ props.lat } longtitude={ props.lng } />
+              <MapCustomView latitude={ props.data.latitude } longtitude={ props.data.longitude } />
             </IonCol>
             <IonCol>
               <p>Date</p>
               <p>IMEI</p>
               <p>Mode</p>
+              <p>Band</p>
               <p>RSSI</p>
               <p>RSRP</p>
               <p>SINR</p>
@@ -47,13 +37,14 @@ const HistoryCard: React.FC<{
             </IonCol>
             <IonCol>
               <p>{timestampConverter()}</p>
-              <p>{props.imei}</p>
-              <p>{props.mode}</p>
-              <p>{props.rssi}</p>
-              <p>{props.rsrp}</p>
-              <p>{props.sinr}</p>
-              <p>{props.rsrq}</p>
-              <p>{props.pcid}</p>
+              <p>{props.data.imei}</p>
+              <p>{props.data.mode}</p>
+              <p>{props.data.band}</p>
+              <p>{props.data.scRSSI}</p>
+              <p>{props.data.scRSRP}</p>
+              <p>{props.data.scSINR}</p>
+              <p>{props.data.scRSRQ}</p>
+              <p>{props.data.scPCID}</p>
             </IonCol>
           </IonRow>
         </IonGrid>

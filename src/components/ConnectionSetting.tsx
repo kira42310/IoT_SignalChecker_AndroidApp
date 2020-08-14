@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonSegment,
   IonSegmentButton,
@@ -12,17 +12,31 @@ import {
   IonAlert,
   IonLoading,
 } from "@ionic/react";
-import { AppSettings } from "../AppSettings"
+import { AppSettings } from "../AppSettings";
 
 const ConnectionSetting: React.FC<{
-  onChangeIsConnect: (imei: string, mode: string, rpiDestination: string) => void;
+  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, rpiDestination: string) => void;
 }> = (props) => {
   const [rpiIP, setRPiIP] = useState<string>(AppSettings.RPI_IP);
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
   const [mode, setMode] = useState<string>(AppSettings.MODE);
   const [band, setBand] = useState<string>(AppSettings.BAND);
+  const [ apn, setAPNValue ] = useState<string>();
   const [errorConnection, setErrorConnection] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect( () => {
+    loadSetting();
+  },[]);
+
+  const loadSetting = () => {
+    if( sessionStorage.getItem( 'mode' )){
+      setMode( sessionStorage.getItem( 'mode' )! );
+      setBand( sessionStorage.getItem( 'band' )! );
+      setRPiIP( sessionStorage.getItem( 'rpiIP' )! );
+      setRPiPort( +sessionStorage.getItem( 'rpiPort' )! );
+    }
+  };
 
   const ipPortInput = () => {
     if (
@@ -56,14 +70,67 @@ const ConnectionSetting: React.FC<{
 
   const rpiConnect = async () => {
     if ( ipPortInput() ) return ;
-    const uri = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
+    const url = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
     setLoading(true);
-    const result = await fetch(uri)
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+    const result = await fetch(url, { signal })
       .then( (response) => response.json() )
       .then( (data) => { return data; })
     setLoading(false);
-    if( result[0] == "F" ) { setErrorConnection("Cannot connect to Base!"); return ;}
-    props.onChangeIsConnect( result[0], result[1], rpiIP + ":" + rpiPort );
+    if( result[0] === "F" ) { setErrorConnection("Cannot connect to Base!"); return ; }
+    props.onChangeIsConnect( result[0], result[1], result[2], result[3], result[4], rpiIP + ":" + rpiPort );
+  };
+
+  const resetModule = async () => {
+    const url = ("http://" + rpiIP + ":" + rpiPort + "/repair")
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+
+    const result = await fetch( url, { signal })
+      .then( response => response.json() )
+      .then( d => { return d });
+    if( result ) setErrorConnection( "Reset success" );
+    else setErrorConnection( "Reset Fail" );
+  };
+
+  const defaultValue = () => {
+    setMode( AppSettings.MODE );
+    setBand( AppSettings.BAND );
+    setRPiIP( AppSettings.RPI_IP );
+    setRPiPort( AppSettings.RPI_PORT );
+  };
+
+  const setAPN = async () => {
+    const ip = sessionStorage.getItem( "rpiIP" );
+    const port = sessionStorage.getItem( "rpiPort" );
+    if( !ip || !port ){
+      const ip = AppSettings.RPI_IP;
+      const port = AppSettings.RPI_PORT;
+    }
+    const url = ("http://" + ip + ":" + port + "/apnSetting?apn=" + apn );
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+
+    const res = await fetch( url, { signal })
+      .then( response => response.json() )
+      .then( data => { return data })
+      .catch( e => console.log(e) );
+    if( res === "P" ) setErrorConnection( "Set APN success" );
+    else if( res === "F" ) setErrorConnection( "Set APN Failed!" );
+    else setErrorConnection( "Connection to RPI Error" );
+  };
+
+  const saveSetting = () => {
+    sessionStorage.setItem( 'mode', mode);
+    sessionStorage.setItem( 'band', band );
+    sessionStorage.setItem( 'rpiIP', rpiIP );
+    sessionStorage.setItem( 'rpiPort', rpiPort.toString() );
+    rpiConnect();
   };
 
   return (
@@ -128,7 +195,30 @@ const ConnectionSetting: React.FC<{
       </IonRow>
       <IonRow>
         <IonCol className="ion-margin-top">
-          <IonButton onClick={rpiConnect} expand="full" size="large">Connect</IonButton>
+          <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={ defaultValue } expand="full">Default Value</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={ resetModule } expand="full">Reset Module</IonButton>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonLabel>Set APN</IonLabel>
+          <IonItem>
+            <IonInput value={ apn } debounce={ 500 }  onIonChange={ e => setAPNValue( e.detail.value! ) } />
+          </IonItem>
+        </IonCol>
+      </IonRow>
+      <IonRow>
+        <IonCol className="ion-margin-top">
+          <IonButton onClick={ setAPN } expand="full">Set APN</IonButton>
         </IonCol>
       </IonRow>
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />

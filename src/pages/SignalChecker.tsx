@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, } from "react";
 import { 
   IonPage, 
   IonHeader, 
@@ -16,192 +16,335 @@ import {
   IonChip,
   IonCard,
   IonCardContent,
-  IonInput,
-  IonItem,
   IonLoading,
+  IonIcon,
+  useIonViewDidEnter,
+  useIonViewWillLeave,
+  IonToast,
 } from "@ionic/react";
-import { useCurrentPosition, availableFeatures } from "@ionic/react-hooks/geolocation";
+import { settings, ellipse, refresh } from "ionicons/icons";
+import { Plugins, } from "@capacitor/core";
 import ConnectionSetting from "../components/ConnectionSetting";
 import PingSection from "../components/PingSection";
+import StaticCheck from "../components/StaticCheck";
+import MovingCheck from "../components/MovingCheck";
+import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
+import { AppFunction, signalDataInterface } from "../AppFunction";
+
+const { Storage, App, BackgroundTask } = Plugins;
+
+App.addListener( 'appStateChange', (state) => {
+  if( !state.isActive ){
+    let taskId = BackgroundTask.beforeExit( async () => {
+      let url: string;
+      const ip = sessionStorage.getItem( 'rpiIP' );
+      const port = sessionStorage.getItem( 'rpiPort' );
+      if( ip && port ) { url = ip + ":" + port }
+      else { url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT }
+      AppFunction.disableModule( url );
+      BackgroundTask.finish({ taskId });
+    });
+  }
+});
 
 const SignalChecker: React.FC = () => {
 
   const [ isConnect, setIsConnect ] = useState<boolean>(false);
+  const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
-  const [ imei, setIMEI ] = useState<string>();
-  const [ rssi, setRSSI ] = useState<string>();
-  const [ rsrp, setRSRP ] = useState<string>();
-  const [ sinr, setSINR ] = useState<string>();
-  const [ rsrq, setRSRQ ] = useState<string>();
+  const [ imei, setIMEI ] = useState<string>( "0" );
+  const [ imsi, setIMSI ] = useState<string>();
   const [ mode, setMode ] = useState<string>();
-  const { currentPosition, getPosition } = useCurrentPosition();
+  const [ band, setBand ] = useState<string>();
+  const [ ip, setIP ] = useState<string>();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
-  const [ isTrack, setIsTrack ] = useState<boolean>(false);
-  const [ trackHandler, setTrackHandler ] = useState<any>();
-  const [ enableBTN, setEnableBTN ] = useState<boolean>(false);
-  const [ enableTrackBTN, setEnableTrackBTN ] = useState<boolean>(false);
-  const [ delay, setDelayTracking ] = useState<number>(AppSettings.TRACKING_DELAY);
+  const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
+  const [ movingWindow, setMovingWindow ] = useState<boolean>(false);
+  const [ staticWindowClose, setStaticWindowClose ] = useState<boolean>( false );
+  const [ movingWindowClose, setMovingWindowClose ] = useState<boolean>( false );
+  const [ manualWindow, setManualWindow ] = useState<boolean>( false );
   const [ loading, setLoading ] = useState<boolean>(false);
+  const [ toastRecon, setToastRecon ] = useState<boolean>(true);
+  // const [ location, setLocation ] = useState<google.maps.LatLng>();
+  const timerId = useRef<any>();
 
-  useEffect(() => {
-    if(!availableFeatures.watchPosition){
-      setError("Geolocation service is not available.")
-    }
-  },[]);
+  useIonViewDidEnter( () => {
+    setIntervalCheckConnect();
+  });
 
-  const signalStrength = async () => {
-    setLoading(true);
-    const signalStrength = await fetch("http://" + rpiDestination + "/signalStrength")
-      .then((response) => response.json())
-      .then((data) => { return data });
-    setRSSI(signalStrength[0]);
-    setRSRP(signalStrength[1]);
-    setSINR(signalStrength[2]);
-    setRSRQ(signalStrength[3]);
-    if(availableFeatures.watchPosition){
-      getPosition({ timeout: 30000 });
-      const dbOption = {
-        method: "POST",
-        headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imei: imei,
-          rssi: signalStrength[0],
-          rsrp: signalStrength[1],
-          sinr: signalStrength[2],
-          rsrq: signalStrength[3],
-          pcid: signalStrength[4],
-          mode: mode,
-          latitude: currentPosition?.coords.latitude,
-          longitude: currentPosition?.coords.longitude,
-        })
-      };
+  useIonViewWillLeave( () => {
+    clearInterval( timerId.current );
+    setToastRecon( false );
+  });
 
-      const result = await fetch(AppSettings.DB_LOCATION + "/insertdata", dbOption)
-        .then((response) => response.json())
-        .then((result) => { return result })
-        .catch(error => console.log(error));
-      console.log(result);
-    }
-    setLoading(false);
+  const getURL = () => {
+    let url: string;
+    const ip = sessionStorage.getItem( "rpiIP" );
+    const port = sessionStorage.getItem( "rpiPort" );
+    if( ip && port ) { url = ip + ":" + port; }
+    else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
+    setRPiDestination( url );
+    return url;
   };
 
-  const signalTracker = () => {
-    if(isTrack) {
-      setIsTrack(false);
-      setEnableBTN(true);
-      clearInterval(trackHandler);
+  const setIntervalCheckConnect = () => {
+    clearInterval( timerId.current );
+    checkConnect();
+    timerId.current = setInterval( () => checkConnect(), AppSettings.CONNECTION_INTERVAL );
+  };
+
+  const checkConnect = async () => {
+    const url = await getURL();
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), 10000 );
+    const result = await fetch( "http://" + url + "/status", { signal } )
+      .then(( response ) => response.json() )
+      .then(( data ) => { return data; })
+      .catch(( error ) => { console.log( error ); });
+    if( result === "P" ){
+      setIsConnect( true );
+      setColorStatus( 'success' );
+      setToastRecon( false );
+      const data = await fetch( "http://" + url + "/info" )
+        .then(( response ) => response.json() )
+        .then(( data ) => { return data })
+        .catch( e => console.log( e ));
+      setIMEI( data[0] );
+      setIMSI( data[1] );
+      setMode( data[2] );
+      setBand( data[3] );
+      setIP( data[4] );
+    }
+    else if( result === "F" ){
+      clearInterval( timerId.current );
+      setIsConnect( false );
+      setColorStatus( 'warning' );
+      setToastRecon( true );
+    }
+    else if( result === undefined ){
+      clearInterval( timerId.current );
+      setIsConnect( false );
+      setColorStatus( 'danger' );
+      setToastRecon( true );
+    }
+  };
+
+  const reconnect = async () => {
+    setLoading( true );
+    clearInterval( timerId.current );
+    const url = await getURL();
+    const m = sessionStorage.getItem( "mode" );
+    const b = sessionStorage.getItem( "band" );
+    if( !m && !b ){
+      const m = AppSettings.MODE;
+      const b = AppSettings.BAND;
+    }
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+    const res = await fetch( "http://" + url + "/connectBase?mode=" + m + "&band=" + b, { signal } )
+      .then( response => response.json() )
+      .then( data => { return data })
+      .catch( e => console.log( e ) );
+    console.log(signal.aborted);
+    if( res && res !== "F" ){
+      setIsConnect( true );
+      setColorStatus( 'success' );
+      setToastRecon( false );
+      setIMEI( res[0] );
+      setIMSI( res[1] );
+      setMode( res[2] );
+      setBand( res[3] );
+      setIP( res[4] );
+      setIntervalCheckConnect();
+    }
+    else if( res === "F" ){
+      setIsConnect( false );
+      setColorStatus( 'warning' );
+      setToastRecon( true );
     }
     else{
-      setIsTrack(true);
-      setEnableBTN(false);
-      const trackerHandler = setInterval( () => {signalStrength()}, delay*1000);
-      setTrackHandler(trackerHandler);
+      setIsConnect( false );
+      setColorStatus( 'danger' );
+      setToastRecon( true );
     }
+    setLoading( false );
   };
 
-  const changeIsConnect = ( imei: string, mode: string , destination: string ) => {
+  const insertDB = async ( lat: number, lng: number, d: signalDataInterface) => {
+    const body = Object.assign({
+      username: 'test',
+      imei: imei,
+      imsi: imsi,
+      mode: mode,
+      band: band,
+      latitude: lat,
+      longitude: lng,
+    },d);
+    const dbOption = {
+      method: "POST",
+      headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    };
+    
+    const res = await fetch(AppSettings.DB_LOCATION + "/insertdb", dbOption)
+      .then((response) => response.json())
+      .then((result) => { return result })
+      .catch(error => console.log(error));
+    if( res ) setError('Insert database success');
+    else setError('Failed to insert database');
+  };
+
+  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, ip: string, destination: string ) => {
     setIsConnect(true);
+    setColorStatus( 'success' );
     setIMEI(imei);
+    setIMSI(imsi);
     setMode(mode);
+    setBand(band);
+    setIP(ip);
     setRPiDestination(destination);
     setConnectionWindow(false);
-    setEnableBTN(true);
-    setEnableTrackBTN(true);
+    setIntervalCheckConnect();
   };
 
   const clearError = () => {
     setError("");
   };
 
+  const Disconnect = ( res: string ) => {
+    clearInterval( timerId.current );
+    setManualWindow( false );
+    setStaticWindow( false );
+    setMovingWindow( false );
+    if( res === "F" ){
+      setIsConnect( false );
+      setColorStatus( 'warning' );
+      setToastRecon( true );
+      setLoading( false );
+      setError( "Cannot Connect to Serving Cell" );
+      return;
+    }
+    else if( res === "D" ){
+      setIsConnect( false );
+      setColorStatus( 'danger' );
+      setToastRecon( true );
+      setLoading( false );
+      setError( "Cannot Connect to RPi Device" );
+      return;
+    }
+  };
+
+  const onAutoTest = ( tname: string ) => {
+    clearInterval( timerId.current );
+    if( tname === "moving" ){
+      setMovingWindowClose( true );
+    }
+    else if( tname === "static" ){
+      setStaticWindowClose( true );
+    }
+  };
+
+  const offAutoTest = ( tname: string ) => {
+    if( tname === "moving" ){
+      setMovingWindowClose( false );
+    }
+    else if( tname === "static" ){
+      setStaticWindowClose( false );
+    }
+    setIntervalCheckConnect();
+  };
+
+  const disableModule = () => {
+    clearInterval( timerId.current );
+    const res = AppFunction.disableModule( getURL() );
+    if( res ) setError('Disable RPi Success');
+    else setError('Disable RPi Failed');
+  }
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar color="primary">
-          <IonTitle>Signal Checker</IonTitle>
+          <IonTitle>IoT Signal Checker</IonTitle>
+          <IonIcon color={ colorStatus } slot="secondary" size="large" icon={ ellipse } />
+          <IonButtons slot="end">
+            <IonButton onClick={ () => setConnectionWindow(true) }>
+              <IonIcon slot="icon-only" icon={ settings } />
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent>
         <IonGrid>
-          <IonRow>
-            <IonCol>
-              <IonButton onClick={ () => setConnectionWindow(true) } expand="full">Signal and RPi Settings</IonButton>
-            </IonCol>
-          </IonRow>
           <IonCard>
             <IonCardContent>
               <IonRow>
-                <IonCol class="ion-align-self-center"><IonLabel>Raspberry Pi Status:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center"><IonLabel>IMEI:</IonLabel></IonCol>
                 <IonCol>
-                  { isConnect? <IonChip color="success">Connected</IonChip>:<IonChip color="danger">Connected</IonChip> }
+                  { isConnect? <IonChip color="primary">{imei}</IonChip>:<IonChip color="danger">X</IonChip> }
                 </IonCol>
               </IonRow>
               <IonRow>
-                <IonCol class="ion-align-self-center"><IonLabel>IMMI:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center"><IonLabel>IMSI:</IonLabel></IonCol>
                 <IonCol>
-                  { isConnect? <IonChip color="primary">{imei}</IonChip>:<IonChip color="danger">X</IonChip> }
+                  { isConnect? <IonChip color="primary">{imsi}</IonChip>:<IonChip color="danger">X</IonChip> }
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol class="ion-align-self-center"><IonLabel>Mode:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
+                  { isConnect? <IonChip color="primary" >{mode}</IonChip>:<IonChip color="danger">X</IonChip> }
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol class="ion-align-self-center"><IonLabel>Band:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
+                  { isConnect? <IonChip color="primary">{band}</IonChip>:<IonChip color="danger">X</IonChip> }
+                </IonCol>
+              </IonRow>
+              <IonRow>
+                <IonCol class="ion-align-self-center"><IonLabel>IP:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
+                  { isConnect? <IonChip color="primary">{ip}</IonChip>:<IonChip color="danger">X</IonChip> }
                 </IonCol>
               </IonRow>
             </IonCardContent>
           </IonCard>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => setPingWindow(true) } disabled={!enableBTN}  expand="full">Ping</IonButton>
+              <IonButton onClick={ () => setPingWindow(true) } disabled={ !isConnect }  expand="full">Ping</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={signalStrength} disabled={!enableBTN} expand="full">Signal Check</IonButton>
+              <IonButton onClick={ () => setStaticWindow( true ) } disabled={ !isConnect } expand="full">Static Test</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={signalTracker} disabled={!enableTrackBTN} expand="full">Signal Check Tracking Mode</IonButton>
+              <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Moving Test</IonButton>
             </IonCol>
+          </IonRow>
+          <IonRow>
             <IonCol>
-              <IonItem>
-                <IonInput type="number" value={delay} disabled={!enableTrackBTN} placeholder="Delay" onIonChange={e => setDelayTracking(+e.detail.value!)} debounce={500} />
-              </IonItem>
+              <IonButton onClick={ () => setManualWindow( true ) } disabled={ !isConnect } expand="full">Manual Test</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
-            <IonCol size="6">
-              <IonCard>
-                <IonCardContent>RSSI:{ !rssi? "00": rssi }</IonCardContent>
-              </IonCard>
-            </IonCol>
-            <IonCol size="6">
-              <IonCard>
-                <IonCardContent>RSRP:{ !rsrp? "00": rsrp }</IonCardContent>
-              </IonCard>
+            <IonCol>
+              <IonButton onClick={ () => disableModule() } disabled={ !isConnect } expand="full" color="danger">Disable Module</IonButton>
             </IonCol>
           </IonRow>
-          <IonRow>
-            <IonCol size="6">
-              <IonCard>
-                <IonCardContent>SINR:{ !sinr? "00": sinr }</IonCardContent>
-              </IonCard>
-            </IonCol>
-            <IonCol size="6">
-              <IonCard>
-                <IonCardContent>RSRQ:{ !rsrq? "00": rsrq }</IonCardContent>
-              </IonCard>
-            </IonCol>
-          </IonRow>
-          {/* <IonCard>
-            <IonCardContent>
-              <IonRow>
-                <IonCol size="3"><IonLabel>RSSI:</IonLabel>{rssi}</IonCol>
-                <IonCol size="3"><IonLabel>RSRP:</IonLabel>{rsrp}</IonCol>
-                <IonCol size="3"><IonLabel>SINR:</IonLabel>{sinr}</IonCol>
-                <IonCol size="3"><IonLabel>RSRQ:</IonLabel>{rsrq}</IonCol>
-              </IonRow>
-            </IonCardContent>
-          </IonCard> */}
         </IonGrid>
       </IonContent>
+
       <IonModal isOpen={connectionWindow}>
         <IonHeader translucent>
           <IonToolbar>
@@ -213,6 +356,7 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <ConnectionSetting onChangeIsConnect={changeIsConnect}/>
       </IonModal>
+
       <IonModal isOpen={pingWindow}>
         <IonHeader translucent>
           <IonToolbar>
@@ -224,8 +368,66 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <PingSection destination={rpiDestination!} />
       </IonModal>
-      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError }]} />
-      <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
+
+      <IonModal isOpen={ staticWindow }>
+        <IonHeader translucent>
+          <IonToolbar>
+            <IonTitle>Static Test</IonTitle>
+            <IonButtons slot="end">
+              <IonButton disabled={ staticWindowClose }onClick={ () => setStaticWindow(false) }>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <StaticCheck 
+          Disconnect={ Disconnect }
+          onAutoTest={ onAutoTest }
+          offAutoTest={ offAutoTest }
+          insertDB={ insertDB }
+          url={ rpiDestination! } 
+        />
+      </IonModal>
+
+      <IonModal isOpen={ movingWindow }>
+        <IonHeader translucent>
+          <IonToolbar>
+            <IonTitle>Moving Test</IonTitle>
+            <IonButtons slot="end">
+              <IonButton disabled={ movingWindowClose } onClick={ () => setMovingWindow(false) }>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <MovingCheck
+          Disconnect={ Disconnect }
+          onAutoTest={ onAutoTest }
+          offAutoTest={ offAutoTest }
+          insertDB={ insertDB }
+          url={ rpiDestination! } 
+        />
+      </IonModal>
+
+      <IonModal isOpen={ manualWindow }>
+        <IonHeader translucent>
+          <IonToolbar>
+            <IonTitle>Moving Test</IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={ () => setManualWindow(false) }>Close</IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <ManualCheck
+          Disconnect={ Disconnect }
+          insertDB={ insertDB }
+          url={ rpiDestination! } 
+        />
+      </IonModal>
+
+      <IonToast 
+        isOpen={ toastRecon } 
+        cssClass="tabs-bottom"
+        buttons={[{ icon: refresh, handler: () => { setToastRecon( false ); reconnect(); }}]}
+        message="Reconnect" />
+      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
+      <IonLoading isOpen={ loading } message={ "Please Wait..." } backdropDismiss={ true } />
     </IonPage>
   );
 };
