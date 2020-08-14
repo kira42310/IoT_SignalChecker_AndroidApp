@@ -3,28 +3,20 @@ import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, } from "
 import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
+import { markerInterface } from "../AppFunction";
 
 const { Geolocation } = Plugins;
 
 const MapInterface: React.FC<{
-  showValue: "rssi" | "rsrp" | "sinr" | "rsrq",
+  showValue: "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" ,
 }> = (props) => {
 
-  // const [ isMapLoaded, setIsMapLoaded ] = useState< boolean >( false );
   const [ isLoaded, setIsLoaded ] = useState< boolean >( false );
   const [ info, setInfo ] = useState<{ lat: number, lng: number, data: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
   const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
-  const [ markers, setMarkers ] = useState<{ 
-    latitude: number, 
-    longitude: number, 
-    rssi: number, 
-    rsrp: number,
-    sinr: number,
-    rsrq: number,
-    _id: { $oid: string } 
-  }[]>([]);
+  const [ markers, setMarkers ] = useState< markerInterface[] >([]);
 
   useIonViewWillEnter( () => {
     const getLocation = async () => {
@@ -35,9 +27,6 @@ const MapInterface: React.FC<{
   });
 
   useIonViewDidEnter( () => {
-    // if( !( typeof mapBound === 'undefined') ){
-    //   loadData( mapBound?.getNorthEast().lat(), mapBound?.getNorthEast().lng(), mapBound?.getSouthWest().lat(), mapBound?.getSouthWest().lng() );
-    // }
     setIsLoaded( true );
   });
 
@@ -71,7 +60,6 @@ const MapInterface: React.FC<{
   }
   
   const onMapLoad = async ( map: google.maps.Map ) => {
-    // setIsMapLoaded( true );
     setMapOBJ( map );
   };
 
@@ -85,9 +73,9 @@ const MapInterface: React.FC<{
   };
 
   const convertDataToIcon = ( data: number ) => {
-    if( props.showValue === "rssi" || props.showValue === "rsrp" ) return createPinSymbol( colorRssiRsrp(data) );
-    else if( props.showValue === "sinr" ) return createPinSymbol( colorSinr(data) );
-    else if( props.showValue === "rsrq" ) return createPinSymbol( colorRsrq(data) );
+    if( props.showValue === "scRSSI" || props.showValue === "scRSRP" ) return createPinSymbol( AppSettings.getColorRssiRsrp(data) );
+    else if( props.showValue === "scSINR" ) return createPinSymbol( AppSettings.getColorSinr(data) );
+    else if( props.showValue === "scRSRQ" ) return createPinSymbol( AppSettings.getColorRsrq(data) );
     else return createPinSymbol("black");
   };
 
@@ -101,37 +89,6 @@ const MapInterface: React.FC<{
       scale: 1
     };
   }
-
-  const colorRssiRsrp = ( data: number ) => {
-    if( data >= -80 ) return "blue"
-    else if( data < -80 && data >= -90 ) return "aqua"
-    else if( data < -90 && data >= -95 ) return "darkgreen"
-    else if( data < -95 && data >= -100 ) return "greenyellow"
-    else if( data < -100 && data >= -110 ) return "yellow"
-    else if( data < -110 && data >= -116 ) return "red"
-    else if( data < -116 && data >= -124 ) return "grey"
-    else if( data < -124 ) return "darkblue"
-    else return "black"
-  };
-
-  const colorSinr = ( data: number ) => {
-    if( data >= 20 ) return "purple"
-    if( data < 20 && data >= 15 ) return "hotpink"
-    if( data < 15 && data >= 10 ) return "goldenrod"
-    if( data < 10 && data >= 5 ) return "cornflowerblue"
-    if( data < 5 && data >= 0 ) return "orchid"
-    if( data < 0 ) return "gray"
-    else return "black"
-  };
-
-  const colorRsrq = ( data: number ) => {
-    if( data >= -6 ) return "purple"
-    if( data < -6 && data >= -9 ) return "hotpink"
-    if( data < -9 && data >= -11 ) return "cornflowerblue"
-    if( data < -11 && data >= -14 ) return "orchid"
-    if( data < -14 ) return "gray"
-    else return "black"
-  };
 
   const infoWindowPanel = ( lat: number, lng: number, data: number ) => {
     setInfo({ lat: lat, lng: lng, data: data });

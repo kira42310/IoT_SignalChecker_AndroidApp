@@ -42,6 +42,15 @@ export interface signalColorInterface {
   n3RSRQ: string,
 };
 
+export interface markerInterface{  
+  _id: { $oid: string },
+  latitude: number, 
+  longitude: number, 
+  scRSSI: number, 
+  scRSRP: number,
+  scSINR: number,
+  scRSRQ: number,};
+
 export class AppFunction {
 
   static timeoutID: any;

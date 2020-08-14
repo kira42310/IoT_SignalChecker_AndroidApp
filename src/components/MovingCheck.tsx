@@ -15,19 +15,19 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
 import { trash } from "ionicons/icons";
 import { AppSettings } from "../AppSettings";
-import { signalDataInterface } from "../AppFunction";
+import { signalDataInterface, markerInterface } from "../AppFunction";
 
 const { Geolocation, } = Plugins;
 
-interface markerInterface {
-  id: number,
-  latitude: number, 
-  longitude: number, 
-  scRSSI: number, 
-  scRSRP: number,
-  scSINR: number,
-  scRSRQ: number, 
-}
+// interface markerInterface {
+//   id: number,
+//   latitude: number, 
+//   longitude: number, 
+//   scRSSI: number, 
+//   scRSRP: number,
+//   scSINR: number,
+//   scRSRQ: number, 
+// }
 
 const MovingCheck: React.FC<{
   Disconnect: ( res: string) => void,
@@ -112,7 +112,7 @@ const MovingCheck: React.FC<{
 
   const convertToMarkerData = ( data: any, location: GeolocationPosition ): markerInterface => {
     return { 
-      'id': Date.now(),
+      '_id': { $oid: Date.now().toString() },
       'latitude': location.coords.latitude, 
       'longitude': location.coords.longitude, 
       'scRSSI': data['scRSSI'],
@@ -127,7 +127,7 @@ const MovingCheck: React.FC<{
   };
 
   const clearMarker = () => {
-    markers.current = markers.current.filter( m => m.id === 0 );
+    markers.current = markers.current.filter( m => m._id.$oid === "0" );
     sessionStorage.removeItem('movingTestMarker')
     setUpdate( update + 1 )
   };
@@ -212,7 +212,7 @@ const MovingCheck: React.FC<{
         zoom={14}>
         {
           markers.current.map( data => (
-            <Marker key={ data.id } 
+            <Marker key={ data._id.$oid } 
               position={{ lat: data.latitude, lng: data.longitude }} 
               options={{ icon: convertDataToIcon( data['scRSSI'] ) }}
             />

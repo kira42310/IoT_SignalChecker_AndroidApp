@@ -15,7 +15,7 @@ import MapInterface from "../components/MapInterface";
 const MapInfo: React.FC = () => {
 
   const [ error, setError ] = useState<string>();
-  const [ showValue, setShowValue ] = useState< "rssi" | "rsrp" | "sinr" | "rsrq" >("rssi");
+  const [ showValue, setShowValue ] = useState< "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" >("scRSSI");
 
   const clearError = () => {
     setError("")
@@ -32,10 +32,10 @@ const MapInfo: React.FC = () => {
         <MapInterface showValue={showValue} />
         <IonCard>
           <IonSelect value={showValue} interface="action-sheet" onIonChange={ e => setShowValue(e.detail.value) }>
-            <IonSelectOption value="rssi">RSSI</IonSelectOption>
-            <IonSelectOption value="rsrp">RSRP</IonSelectOption>
-            <IonSelectOption value="sinr">SINR</IonSelectOption>
-            <IonSelectOption value="rsrq">RSRQ</IonSelectOption>
+            <IonSelectOption value="scRSSI">RSSI</IonSelectOption>
+            <IonSelectOption value="scRSRP">RSRP</IonSelectOption>
+            <IonSelectOption value="scSINR">SINR</IonSelectOption>
+            <IonSelectOption value="scRSRQ">RSRQ</IonSelectOption>
           </IonSelect>
         </IonCard>
       </IonContent>
