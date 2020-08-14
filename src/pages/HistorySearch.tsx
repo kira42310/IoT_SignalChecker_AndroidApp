@@ -17,11 +17,12 @@ import {
   IonDatetime,
   IonCardTitle,
   IonCardHeader,
-  IonButton, 
+  IonButton,
 } from "@ionic/react";
 import { Plugins } from "@capacitor/core";
 import HistoryCard from "../components/HistoryCard";
 import { AppSettings } from "../AppSettings";
+import { retriveDataFromDBInterface } from "../AppFunction";
 
 const { Storage } = Plugins;
 
@@ -36,19 +37,7 @@ const HistorySearch: React.FC = () => {
   const [ page, setPage ] = useState<number>(1);
   const [ hasMore, setHasMore ] = useState<boolean>(true);
 
-  const [ data, setData ] = useState<{ 
-    imei: string, 
-    rssi: string, 
-    rsrp: string, 
-    sinr: string, 
-    rsrq: string, 
-    pcid: string, 
-    mode: string,
-    latitude: number, 
-    longitude: number, 
-    _id: { $oid: string },
-    date: { $date: Date }
-  }[]>([]);
+  const [ data, setData ] = useState< retriveDataFromDBInterface[]>([]);
 
   useIonViewWillEnter( () => {
     const tmp = new Date().toISOString();
@@ -174,16 +163,7 @@ const HistorySearch: React.FC = () => {
         {
           data.map( info => (
             <HistoryCard key={ createKey( info._id.$oid ) }
-              imei={info.imei}
-              rssi={info.rssi}
-              rsrp={info.rsrp}
-              sinr={info.sinr}
-              rsrq={info.rsrq}
-              pcid={info.pcid}
-              mode={info.mode}
-              date={info.date.$date}
-              lat={info.latitude}
-              lng={info.longitude}
+              data={ info }
             />
           ))
         }
