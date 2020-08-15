@@ -239,6 +239,7 @@ const ConnectionSetting: React.FC<{
           { text: "Set", handler: (data: any) => { setAPN( data.apn ); setAPNAlert( false ); } }, 
           { text: "Cancel", handler: () => { setAPNAlert( false ) } }
         ]}
+        onDidDismiss={ () => setAPNAlert( false ) }
       />
       <IonAlert 
         isOpen={ tokenAlert }
@@ -248,9 +249,19 @@ const ConnectionSetting: React.FC<{
           { text: "Set", handler: (data: any) => { saveToken( data.token ); setTokenAlert( false ); } }, 
           { text: "Cancel", handler: () => { setTokenAlert( false ) } }
         ]}
+        onDidDismiss={ () => setTokenAlert( false ) }
       />
-      <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
-      <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
+      <IonAlert 
+        isOpen={!!errorConnection} 
+        message={errorConnection} 
+        buttons={[{ text: "Okey", handler: clearErrorConnection }]} 
+      />
+      <IonLoading 
+        isOpen={loading} 
+        message={'Please Wait...'} 
+        backdropDismiss={true}
+        onDidDismiss={ () => setLoading( false ) }
+      />
     </IonGrid>
   );
 };
