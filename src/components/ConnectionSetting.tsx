@@ -120,11 +120,14 @@ const ConnectionSetting: React.FC<{
 
   const setAPN = async ( apn: string) => {
     setLoading( true );
-    const ip = sessionStorage.getItem( "rpiIP" );
-    const port = sessionStorage.getItem( "rpiPort" );
-    if( !ip || !port ){
-      const ip = AppSettings.RPI_IP;
-      const port = AppSettings.RPI_PORT;
+    let ip,port;
+    if( sessionStorage.getItem( 'rpiIP' ) && sessionStorage.getItem( 'rpiPort' )){
+      ip = sessionStorage.getItem( "rpiIP" );
+      port = sessionStorage.getItem( "rpiPort" );
+    }
+    else{
+      ip = AppSettings.RPI_IP;
+      port = AppSettings.RPI_PORT;
     }
     const url = ("http://" + ip + ":" + port + "/apnSetting?apn=" + apn );
     connectController.current = new AbortController();
