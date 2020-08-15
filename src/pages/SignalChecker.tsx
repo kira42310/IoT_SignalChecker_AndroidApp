@@ -21,6 +21,7 @@ import {
   useIonViewDidEnter,
   useIonViewWillLeave,
   IonToast,
+  IonBackdrop,
 } from "@ionic/react";
 import { settings, ellipse, refresh } from "ionicons/icons";
 import { Plugins, } from "@capacitor/core";
@@ -45,7 +46,7 @@ App.addListener( 'appStateChange', (state) => {
       const controller = new AbortController();
       const signal = controller.signal;
       setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
-      const res = await fetch( 'http://'+url+'/disable', { signal })
+      await fetch( 'http://'+url+'/disable', { signal })
         .then( response => response.json() )
         .then( d => { return d } )
         .catch( e => console.log( e ) );
@@ -74,7 +75,6 @@ const SignalChecker: React.FC = () => {
   const [ manualWindow, setManualWindow ] = useState<boolean>( false );
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ toastRecon, setToastRecon ] = useState<boolean>(true);
-  // const [ location, setLocation ] = useState<google.maps.LatLng>();
   const timerId = useRef<any>();
   const aController = useRef<AbortController>();
 
@@ -107,9 +107,6 @@ const SignalChecker: React.FC = () => {
   const checkConnect = async () => {
     const url = await getURL();
 
-    // const controller = new AbortController();
-    // const signal = controller.signal;
-    // setTimeout( () => controller.abort(), 10000 );
     aController.current = new AbortController();
     const signal = aController.current.signal;
     setTimeout( () => aController.current!.abort(), 10000 );
@@ -148,17 +145,21 @@ const SignalChecker: React.FC = () => {
   const reconnect = async () => {
     setLoading( true );
     clearInterval( timerId.current );
+    aController.current!.abort();
     const url = await getURL();
-    const m = sessionStorage.getItem( "mode" );
-    const b = sessionStorage.getItem( "band" );
-    if( !m && !b ){
-      const m = AppSettings.MODE;
-      const b = AppSettings.BAND;
+    let m,b;
+    if( sessionStorage.getItem( 'mode' ) && sessionStorage.getItem( 'band' )){
+      m = sessionStorage.getItem( "mode" );
+      b = sessionStorage.getItem( "band" );
+    }
+    else {
+      m = AppSettings.MODE;
+      b = AppSettings.BAND;
     }
 
-    const controller = new AbortController();
-    const signal = controller.signal;
-    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
+    aController.current = new AbortController();
+    const signal = aController.current.signal;
+    setTimeout(() => { aController.current!.abort() }, AppSettings.CONNECT_TIMEOUT );
     const res = await fetch( "http://" + url + "/connectBase?mode=" + m + "&band=" + b, { signal } )
       .then( response => response.json() )
       .then( data => { return data })
@@ -188,8 +189,12 @@ const SignalChecker: React.FC = () => {
   };
 
   const insertDB = async ( lat: number, lng: number, d: signalDataInterface) => {
+    if( !(await Storage.get({ key: 'DBToken'} ))){
+      setError( 'No database token' );
+      return ;
+    }
     const body = Object.assign({
-      username: 'test',
+      username: await (await Storage.get({ key: 'DBToken' })).value,
       imei: imei,
       imsi: imsi,
       mode: mode,
@@ -276,13 +281,15 @@ const SignalChecker: React.FC = () => {
   }
 
   const disableModule = async () => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+    aController.current = new AbortController();
+    const signal = aController.current.signal;
+    setTimeout( () => aController.current!.abort(), AppSettings.CONNECT_TIMEOUT );
+    setLoading( true );
     const res = await fetch( 'http://'+rpiDestination+'/disable', { signal })
       .then( response => response.json() )
       .then( d => { return d } )
       .catch( e => console.log( e ) );
+    setLoading( false );
     checkConnect();
     if( res ) setError('Disable RPi Success');
     else setError('Disable RPi Failed');
@@ -448,7 +455,16 @@ const SignalChecker: React.FC = () => {
         buttons={[{ icon: refresh, handler: () => { setToastRecon( false ); reconnect(); }}]}
         message="Reconnect" />
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
-      <IonLoading isOpen={ loading } message={ "Please Wait..." } backdropDismiss={ true } />
+      <IonLoading 
+        isOpen={ loading } 
+        message={ "Please Wait..." } 
+        backdropDismiss={ true } 
+        onDidDismiss={ () => {
+          setLoading( false );
+          aController.current?.abort();
+        }}
+        />
+      <IonBackdrop tappable={ false } />
     </IonPage>
   );
 };
