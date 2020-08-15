@@ -30,7 +30,7 @@ import StaticCheck from "../components/StaticCheck";
 import MovingCheck from "../components/MovingCheck";
 import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
-import { AppFunction, signalDataInterface } from "../AppFunction";
+import { signalDataInterface } from "../AppFunction";
 
 const { Storage, App, BackgroundTask } = Plugins;
 
@@ -42,7 +42,13 @@ App.addListener( 'appStateChange', (state) => {
       const port = sessionStorage.getItem( 'rpiPort' );
       if( ip && port ) { url = ip + ":" + port }
       else { url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT }
-      AppFunction.disableModule( url );
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+      const res = await fetch( 'http://'+url+'/disable', { signal })
+        .then( response => response.json() )
+        .then( d => { return d } )
+        .catch( e => console.log( e ) );
       BackgroundTask.finish({ taskId });
     });
   }
@@ -70,12 +76,14 @@ const SignalChecker: React.FC = () => {
   const [ toastRecon, setToastRecon ] = useState<boolean>(true);
   // const [ location, setLocation ] = useState<google.maps.LatLng>();
   const timerId = useRef<any>();
+  const aController = useRef<AbortController>();
 
   useIonViewDidEnter( () => {
     setIntervalCheckConnect();
   });
 
   useIonViewWillLeave( () => {
+    aController.current!.abort();
     clearInterval( timerId.current );
     setToastRecon( false );
   });
@@ -99,9 +107,12 @@ const SignalChecker: React.FC = () => {
   const checkConnect = async () => {
     const url = await getURL();
 
-    const controller = new AbortController();
-    const signal = controller.signal;
-    setTimeout( () => controller.abort(), 10000 );
+    // const controller = new AbortController();
+    // const signal = controller.signal;
+    // setTimeout( () => controller.abort(), 10000 );
+    aController.current = new AbortController();
+    const signal = aController.current.signal;
+    setTimeout( () => aController.current!.abort(), 10000 );
     const result = await fetch( "http://" + url + "/status", { signal } )
       .then(( response ) => response.json() )
       .then(( data ) => { return data; })
@@ -130,7 +141,7 @@ const SignalChecker: React.FC = () => {
       clearInterval( timerId.current );
       setIsConnect( false );
       setColorStatus( 'danger' );
-      setToastRecon( true );
+      if( window.location.pathname === "/signalchecker" ) setToastRecon( true );
     }
   };
 
@@ -152,7 +163,6 @@ const SignalChecker: React.FC = () => {
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
-    console.log(signal.aborted);
     if( res && res !== "F" ){
       setIsConnect( true );
       setColorStatus( 'success' );
@@ -260,6 +270,10 @@ const SignalChecker: React.FC = () => {
     }
     setIntervalCheckConnect();
   };
+
+  const closeMovingWindow = () => {
+    setMovingWindow( false );
+  }
 
   const disableModule = async () => {
     const controller = new AbortController();
@@ -407,6 +421,7 @@ const SignalChecker: React.FC = () => {
           onAutoTest={ onAutoTest }
           offAutoTest={ offAutoTest }
           insertDB={ insertDB }
+          closeMovingWindow={ closeMovingWindow }
           url={ rpiDestination! } 
         />
       </IonModal>

@@ -55,13 +55,14 @@ const ManualCheck: React.FC<{
       props.Disconnect("D");
       return;
     }
-    const location = await Geolocation.getCurrentPosition();
+    const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
     setData( res );
     setSignalColor( convertSignalToColor( res ));
       
-    if( insertDB ){
+    if( insertDB && !location.code ){
       props.insertDB( location.coords.latitude, location.coords.longitude, res );
     }
+    else setErrorConnection( 'No location service, insert DB failed' );
     saveSession( res );
     setLoading(false);
   };

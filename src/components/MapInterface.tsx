@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, } from "@ionic/react"
+import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, IonAlert } from "@ionic/react"
 import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
@@ -17,11 +17,13 @@ const MapInterface: React.FC<{
   const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
   const [ markers, setMarkers ] = useState< markerInterface[] >([]);
+  const [ error, setError ] = useState<string>();
 
   useIonViewWillEnter( () => {
     const getLocation = async () => {
-      const tmp = await Geolocation.getCurrentPosition();
-      setCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+      const tmp = await Geolocation.getCurrentPosition().catch( e => { return e; } );
+      if( !tmp.code ) setCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+      else setError("Location service not available");
     };
     getLocation()
   });
@@ -95,6 +97,10 @@ const MapInterface: React.FC<{
     setIsInfo( true );
   };
 
+  const clearError = () => {
+    setError("");
+  };
+
   return (
     <GoogleMap mapContainerStyle={ containerStyle } 
         zoom={ 14 } 
@@ -119,6 +125,7 @@ const MapInterface: React.FC<{
           </InfoWindow>
         }
       <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
+      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
     </GoogleMap>
   );
 };

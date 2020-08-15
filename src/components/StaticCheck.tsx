@@ -121,8 +121,9 @@ const StaticCheck: React.FC<{
   const stopTest = async () => {
     clearInterval( trackerInterval.current );
     if( insertData && data !== null ) {
-      const location = await Geolocation.getCurrentPosition();
-      props.insertDB( location.coords.latitude, location.coords.longitude, data );
+      const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
+      if( !location.code ) props.insertDB( location.coords.latitude, location.coords.longitude, data );
+      else setErrorConnection( 'No location service, insert DB failed' );
       setInsertData( false );
     }
     sessionStorage.setItem( 'staticTestData', JSON.stringify( data ) );
