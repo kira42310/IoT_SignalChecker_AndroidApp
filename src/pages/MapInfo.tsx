@@ -10,7 +10,6 @@ import {
     IonSelectOption,
     IonCard,
     IonItem,
-    IonLabel,
     IonInput,
     IonGrid,
     IonRow,

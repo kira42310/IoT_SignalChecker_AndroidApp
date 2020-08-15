@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, IonAlert, IonGrid, IonRow, IonCol } from "@ionic/react"
-import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
+import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
 import { markerInterface } from "../AppFunction";

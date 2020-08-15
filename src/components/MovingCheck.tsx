@@ -10,7 +10,6 @@ import {
   IonLoading,
   IonInput,
   IonIcon,
-  IonContent,
 } from "@ionic/react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
@@ -18,7 +17,7 @@ import { trash } from "ionicons/icons";
 import { AppSettings } from "../AppSettings";
 import { signalDataInterface, markerInterface } from "../AppFunction";
 
-const { Geolocation, Network } = Plugins;
+const { Geolocation, } = Plugins;
 
 const MovingCheck: React.FC<{
   Disconnect: ( res: string) => void,
@@ -53,11 +52,6 @@ const MovingCheck: React.FC<{
     const tmp = await Geolocation.getCurrentPosition().catch( e => { return e; });
     if( !tmp.code ) setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
     else setErrorConnection( 'Location service not available' );
-  };
-
-  const getNetworkStatus = async () => {
-    const s = await Network.getStatus();
-    return s.connected;
   };
 
   const signalStrength = async ( insertDB: boolean = false ) => {
