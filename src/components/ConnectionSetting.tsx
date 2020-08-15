@@ -13,6 +13,9 @@ import {
   IonLoading,
 } from "@ionic/react";
 import { AppSettings } from "../AppSettings";
+import { Plugins } from "@capacitor/core";
+
+const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
   onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, rpiDestination: string) => void;
@@ -21,7 +24,10 @@ const ConnectionSetting: React.FC<{
   const [rpiPort, setRPiPort] = useState<number>(AppSettings.RPI_PORT);
   const [mode, setMode] = useState<string>(AppSettings.MODE);
   const [band, setBand] = useState<string>(AppSettings.BAND);
-  const [ apn, setAPNValue ] = useState<string>();
+  const [ apn, setAPNValue ] = useState<string>( AppSettings.APN );
+  const [ apnAlert, setAPNAlert ] = useState<boolean>( false );
+  const [ dbToken, setDBToken ] = useState<string>();
+  const [ tokenAlert, setTokenAlert ] = useState<boolean>( false );
   const [errorConnection, setErrorConnection] = useState<string>();
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -29,12 +35,15 @@ const ConnectionSetting: React.FC<{
     loadSetting();
   },[]);
 
-  const loadSetting = () => {
+  const loadSetting = async () => {
     if( sessionStorage.getItem( 'mode' )){
       setMode( sessionStorage.getItem( 'mode' )! );
       setBand( sessionStorage.getItem( 'band' )! );
       setRPiIP( sessionStorage.getItem( 'rpiIP' )! );
       setRPiPort( +sessionStorage.getItem( 'rpiPort' )! );
+    }
+    if( await Storage.get({ key: 'DBToken' }) ){
+      setDBToken( await (await Storage.get({ key: 'DBToken' })).value! );
     }
   };
 
@@ -104,7 +113,7 @@ const ConnectionSetting: React.FC<{
     setRPiPort( AppSettings.RPI_PORT );
   };
 
-  const setAPN = async () => {
+  const setAPN = async ( apn: string) => {
     const ip = sessionStorage.getItem( "rpiIP" );
     const port = sessionStorage.getItem( "rpiPort" );
     if( !ip || !port ){
@@ -120,7 +129,10 @@ const ConnectionSetting: React.FC<{
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log(e) );
-    if( res === "P" ) setErrorConnection( "Set APN success" );
+    if( res === "P" ){ 
+      setAPNValue( apn );
+      setErrorConnection( "Set APN success" );
+    }
     else if( res === "F" ) setErrorConnection( "Set APN Failed!" );
     else setErrorConnection( "Connection to RPI Error" );
   };
@@ -133,50 +145,43 @@ const ConnectionSetting: React.FC<{
     rpiConnect();
   };
 
+  const saveToken = async ( token: string ) => {
+    await Storage.set({ key: 'DBToken', value: token });
+    setDBToken( token );
+  };
+
   return (
     <IonGrid>
       <IonRow>
-        <IonCol className="ion-margin-top">
+        <IonCol>
           <IonLabel>Mode</IonLabel>
+          <IonSegment value={mode} onIonChange={(e) => setMode(e.detail.value!)}>
+            <IonSegmentButton value="0">
+              <IonLabel>Auto</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="3">
+              <IonLabel>NB-IoT</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="2">
+              <IonLabel>Cat-M1</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
         </IonCol>
       </IonRow>
       <IonRow>
         <IonCol>
-          <IonItem>
-            <IonSegment value={mode} onIonChange={(e) => setMode(e.detail.value!)}>
-              <IonSegmentButton value="0">
-                <IonLabel>Auto</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="3">
-                <IonLabel>NB-IoT</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="2">
-                <IonLabel>Cat-M1</IonLabel>
-              </IonSegmentButton>
-            </IonSegment>
-          </IonItem>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol className="ion-margin-top">
           <IonLabel>Band</IonLabel>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonItem>
-            <IonSegment value={band} onIonChange={(e) => setBand(e.detail.value!)}>
-              <IonSegmentButton value="F">
-                <IonLabel>Auto</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="1">
-                <IonLabel>900MHz</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="2">
-                <IonLabel>1800MHz</IonLabel>
-              </IonSegmentButton>
-            </IonSegment>
-          </IonItem>
+          <IonSegment value={band} onIonChange={(e) => setBand(e.detail.value!)}>
+            <IonSegmentButton value="F">
+              <IonLabel>Auto</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="1">
+              <IonLabel>900MHz</IonLabel>
+            </IonSegmentButton>
+            <IonSegmentButton value="2">
+              <IonLabel>1800MHz</IonLabel>
+            </IonSegmentButton>
+          </IonSegment>
         </IonCol>
       </IonRow>
       <IonRow>
@@ -194,33 +199,56 @@ const ConnectionSetting: React.FC<{
         </IonCol>
       </IonRow>
       <IonRow>
-        <IonCol className="ion-margin-top">
+        <IonCol>
           <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
         </IonCol>
       </IonRow>
       <IonRow>
-        <IonCol className="ion-margin-top">
+        {/* <IonCol className="ion-margin-top"> */}
+        <IonCol>
           <IonButton onClick={ defaultValue } expand="full">Default Value</IonButton>
         </IonCol>
       </IonRow>
       <IonRow>
-        <IonCol className="ion-margin-top">
+        <IonCol>
           <IonButton onClick={ resetModule } expand="full">Reset Module</IonButton>
         </IonCol>
       </IonRow>
       <IonRow>
-        <IonCol className="ion-margin-top">
-          <IonLabel>Set APN</IonLabel>
-          <IonItem>
-            <IonInput value={ apn } debounce={ 500 }  onIonChange={ e => setAPNValue( e.detail.value! ) } />
+        <IonCol>
+          <IonItem button={ true } onClick={ () => setAPNAlert( true ) } >
+            <IonLabel>APN</IonLabel>
+            <p slot="end">{ apn }</p>
           </IonItem>
         </IonCol>
       </IonRow>
       <IonRow>
-        <IonCol className="ion-margin-top">
-          <IonButton onClick={ setAPN } expand="full">Set APN</IonButton>
+        <IonCol>
+          <IonItem button={ true } onClick={ () => setTokenAlert( true ) } >
+            <IonLabel>Database Token</IonLabel>
+            <p slot="end">{ dbToken }</p>
+          </IonItem>
         </IonCol>
       </IonRow>
+
+      <IonAlert 
+        isOpen={ apnAlert }
+        message="Set APN"
+        inputs={[{ name: "apn", value: apn }]}
+        buttons={[
+          { text: "Set", handler: (data: any) => { setAPN( data.apn ); setAPNAlert( false ); } }, 
+          { text: "Cancel", handler: () => { setAPNAlert( false ) } }
+        ]}
+      />
+      <IonAlert 
+        isOpen={ tokenAlert }
+        message="Set DB Token"
+        inputs={[{ name: "token", value: dbToken }]}
+        buttons={[
+          { text: "Set", handler: (data: any) => { saveToken( data.token ); setTokenAlert( false ); } }, 
+          { text: "Cancel", handler: () => { setTokenAlert( false ) } }
+        ]}
+      />
       <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
       <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
     </IonGrid>
