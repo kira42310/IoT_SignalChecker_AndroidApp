@@ -10,6 +10,7 @@ import {
   IonLoading,
   IonInput,
   IonIcon,
+  IonContent,
 } from "@ionic/react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
@@ -17,22 +18,13 @@ import { trash } from "ionicons/icons";
 import { AppSettings } from "../AppSettings";
 import { signalDataInterface, markerInterface } from "../AppFunction";
 
-const { Geolocation, } = Plugins;
-
-// interface markerInterface {
-//   id: number,
-//   latitude: number, 
-//   longitude: number, 
-//   scRSSI: number, 
-//   scRSRP: number,
-//   scSINR: number,
-//   scRSRQ: number, 
-// }
+const { Geolocation, Network } = Plugins;
 
 const MovingCheck: React.FC<{
   Disconnect: ( res: string) => void,
   onAutoTest: ( tname: string ) => void,
   offAutoTest: ( tname: string ) => void,
+  closeMovingWindow: () => void,
   insertDB: ( lat: number, lng: number, d: signalDataInterface ) => void,
   url: string,
 }> = (props) => {
@@ -58,8 +50,14 @@ const MovingCheck: React.FC<{
   },[]);
 
   const getLocation = async () => {
-    const tmp = await Geolocation.getCurrentPosition();
-    setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+    const tmp = await Geolocation.getCurrentPosition().catch( e => { return e; });
+    if( !tmp.code ) setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
+    else setErrorConnection( 'Location service not available' );
+  };
+
+  const getNetworkStatus = async () => {
+    const s = await Network.getStatus();
+    return s.connected;
   };
 
   const signalStrength = async ( insertDB: boolean = false ) => {
@@ -82,13 +80,17 @@ const MovingCheck: React.FC<{
       props.Disconnect("D");
       return;
     }
-    const location = await Geolocation.getCurrentPosition();
+    const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
     
-    markers.current = [ ...markers.current, convertToMarkerData( res, location)];
+    if( !location.code ){
+      markers.current = [ ...markers.current, convertToMarkerData( res, location)];
+      setMapCenter( new google.maps.LatLng( location.coords.latitude, location.coords.longitude ));
 
-    if( insertDB ){
-      props.insertDB( location.coords.latitude, location.coords.longitude, res );
+      if( insertDB ){
+        props.insertDB( location.coords.latitude, location.coords.longitude, res );
+      }
     }
+    else setErrorConnection( 'No location service, operation failed' );
     
     setLoading(false);
   };
@@ -209,7 +211,9 @@ const MovingCheck: React.FC<{
       </IonRow>
       <GoogleMap mapContainerStyle={ containerStyle } 
         center={ mapCenter }
-        zoom={14}>
+        zoom={14}
+        options={{ gestureHandling: "none" }}
+        >
         {
           markers.current.map( data => (
             <Marker key={ data._id.$oid } 
