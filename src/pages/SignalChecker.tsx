@@ -261,9 +261,15 @@ const SignalChecker: React.FC = () => {
     setIntervalCheckConnect();
   };
 
-  const disableModule = () => {
-    clearInterval( timerId.current );
-    const res = AppFunction.disableModule( getURL() );
+  const disableModule = async () => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+    const res = await fetch( 'http://'+rpiDestination+'/disable', { signal })
+      .then( response => response.json() )
+      .then( d => { return d } )
+      .catch( e => console.log( e ) );
+    checkConnect();
     if( res ) setError('Disable RPi Success');
     else setError('Disable RPi Failed');
   }
