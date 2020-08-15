@@ -42,14 +42,9 @@ const MovingCheck: React.FC<{
   const trackerInterval = useRef<any>( 0 );
 
   useEffect( () => {
-    if( getNetworkStatus() ){
-      getLocation();
-      if( sessionStorage.getItem( 'movingTestMarker' ) ){
-        markers.current = JSON.parse( sessionStorage.getItem( 'movingTestMarker' )! );
-      }
-    }
-    else{
-
+    getLocation();
+    if( sessionStorage.getItem( 'movingTestMarker' ) ){
+      markers.current = JSON.parse( sessionStorage.getItem( 'movingTestMarker' )! );
     }
     return ( () => clearInterval( trackerInterval.current ) );
   },[]);
@@ -89,6 +84,7 @@ const MovingCheck: React.FC<{
     
     if( !location.code ){
       markers.current = [ ...markers.current, convertToMarkerData( res, location)];
+      setMapCenter( new google.maps.LatLng( location.coords.latitude, location.coords.longitude ));
 
       if( insertDB ){
         props.insertDB( location.coords.latitude, location.coords.longitude, res );
@@ -215,7 +211,9 @@ const MovingCheck: React.FC<{
       </IonRow>
       <GoogleMap mapContainerStyle={ containerStyle } 
         center={ mapCenter }
-        zoom={14}>
+        zoom={14}
+        options={{ gestureHandling: "none" }}
+        >
         {
           markers.current.map( data => (
             <Marker key={ data._id.$oid } 

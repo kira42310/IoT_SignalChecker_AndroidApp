@@ -32,7 +32,7 @@ import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
 import { signalDataInterface } from "../AppFunction";
 
-const { Storage, App, BackgroundTask } = Plugins;
+const { Storage, App, BackgroundTask, } = Plugins;
 
 App.addListener( 'appStateChange', (state) => {
   if( !state.isActive ){
@@ -78,7 +78,7 @@ const SignalChecker: React.FC = () => {
   const timerId = useRef<any>();
   const aController = useRef<AbortController>();
 
-  useIonViewDidEnter( () => {
+  useIonViewDidEnter( async () => {
     setIntervalCheckConnect();
   });
 

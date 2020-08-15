@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, IonAlert } from "@ionic/react"
+import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, IonAlert, IonGrid, IonRow, IonCol } from "@ionic/react"
 import { GoogleMap, LoadScript, Marker, InfoWindow } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
 import { markerInterface } from "../AppFunction";
 
-const { Geolocation } = Plugins;
+const { Geolocation, Network } = Plugins;
 
 const MapInterface: React.FC<{
   showValue: "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" ,
+  address: string,
 }> = (props) => {
 
   const [ isLoaded, setIsLoaded ] = useState< boolean >( false );
@@ -35,6 +36,15 @@ const MapInterface: React.FC<{
   useEffect( () => {
     setIsInfo(false);
   }, [ props.showValue ]);
+
+  useEffect( () => {
+    if( props.address !== "" ) getToNewLocation( props.address );
+  }, [ props.address ]);
+
+  const getNetworkStatus = async () => {
+    const tmp = await Network.getStatus();
+    return tmp.connected;
+  };
 
   const reloadMarker = async ( mapBound: google.maps.LatLngBounds ) => {
     if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
@@ -101,33 +111,56 @@ const MapInterface: React.FC<{
     setError("");
   };
 
-  return (
-    <GoogleMap mapContainerStyle={ containerStyle } 
-        zoom={ 14 } 
-        onLoad={ onMapLoad } 
-        center={ center } 
-        onDragEnd={ boundChange }
-        onTilesLoaded={ boundChange }>
-        {
-          markers.map( data => (
-            <Marker key={ data._id.$oid } 
-              position={{ lat: data.latitude, lng: data.longitude }} 
-              onClick={ e => infoWindowPanel( data.latitude, data.longitude, data[props.showValue] )} 
-              options={{ icon: convertDataToIcon( data[props.showValue] ) }}
-            />
-          ))
-        }
-        {
-          !isInfo || <InfoWindow position={{ lat: info!.lat, lng: info!.lng }} onCloseClick={ () => setIsInfo(false) }>
-            <div style={ divStyle }>
-              <IonLabel color="primary">{ info!.data }</IonLabel>
-            </div>
-          </InfoWindow>
-        }
-      <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
-      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
-    </GoogleMap>
-  );
+  const getToNewLocation = async ( address: string ) => {
+    const res = await fetch( 'https://api.opencagedata.com/geocode/v1/json?key='+ AppSettings.OPENCAGE_API_KEY + '&limit=1&q=' + address)
+      .then( response => response.json() )
+      .then( d => { return d; });
+    setCenter( new google.maps.LatLng( res.results[0].geometry.lat, res.results[0].geometry.lng ));
+  };
+
+  function getMap() {
+    return (
+      <GoogleMap mapContainerStyle={ containerStyle } 
+          zoom={ 14 } 
+          onLoad={ onMapLoad } 
+          center={ center } 
+          onDragEnd={ boundChange }
+          onTilesLoaded={ boundChange }>
+          {
+            markers.map( data => (
+              <Marker key={ data._id.$oid } 
+                position={{ lat: data.latitude, lng: data.longitude }} 
+                onClick={ e => infoWindowPanel( data.latitude, data.longitude, data[props.showValue] )} 
+                options={{ icon: convertDataToIcon( data[props.showValue] ) }}
+              />
+            ))
+          }
+          {
+            !isInfo || <InfoWindow position={{ lat: info!.lat, lng: info!.lng }} onCloseClick={ () => setIsInfo(false) }>
+              <div style={ divStyle }>
+                <IonLabel color="primary">{ info!.data }</IonLabel>
+              </div>
+            </InfoWindow>
+          }
+        <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
+        <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
+      </GoogleMap>
+    );
+  };
+
+  function noMap() {
+    return (
+      <IonGrid>
+        <IonRow>
+          <IonCol>
+            <IonLabel>Network not available</IonLabel>
+          </IonCol>
+        </IonRow>
+      </IonGrid>
+    );
+  };
+
+  return ( getNetworkStatus()? getMap(): noMap() );
 };
 
 export default MapInterface;
