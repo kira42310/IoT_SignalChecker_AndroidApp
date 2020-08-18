@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { IonLoading, IonLabel, useIonViewWillEnter, useIonViewDidEnter, IonAlert, IonGrid, IonRow, IonCol } from "@ionic/react"
+import { IonLabel, useIonViewWillEnter, IonAlert, } from "@ionic/react"
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
 import { markerInterface } from "../AppFunction";
 
-const { Geolocation, Network } = Plugins;
+const { Geolocation, } = Plugins;
 
 const MapInterface: React.FC<{
   showValue: "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" ,
   address: string,
 }> = (props) => {
 
-  const [ isLoaded, setIsLoaded ] = useState< boolean >( false );
   const [ info, setInfo ] = useState<{ lat: number, lng: number, data: number }>();
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
   const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
@@ -29,10 +28,6 @@ const MapInterface: React.FC<{
     getLocation()
   });
 
-  useIonViewDidEnter( () => {
-    setIsLoaded( true );
-  });
-
   useEffect( () => {
     setIsInfo(false);
   }, [ props.showValue ]);
@@ -40,11 +35,6 @@ const MapInterface: React.FC<{
   useEffect( () => {
     if( props.address !== "" ) getToNewLocation( props.address );
   }, [ props.address ]);
-
-  const getNetworkStatus = async () => {
-    const tmp = await Network.getStatus();
-    return tmp.connected;
-  };
 
   const reloadMarker = async ( mapBound: google.maps.LatLngBounds ) => {
     if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
@@ -142,25 +132,12 @@ const MapInterface: React.FC<{
               </div>
             </InfoWindow>
           }
-        <IonLoading isOpen={ !isLoaded } message={ 'Please Wait...' } backdropDismiss={ true } />
         <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
       </GoogleMap>
     );
   };
 
-  function noMap() {
-    return (
-      <IonGrid>
-        <IonRow>
-          <IonCol>
-            <IonLabel>Network not available</IonLabel>
-          </IonCol>
-        </IonRow>
-      </IonGrid>
-    );
-  };
-
-  return ( getNetworkStatus()? getMap(): noMap() );
+  return getMap()
 };
 
 export default MapInterface;

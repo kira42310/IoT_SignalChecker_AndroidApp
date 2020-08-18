@@ -23,7 +23,6 @@ const MovingCheck: React.FC<{
   Disconnect: ( res: string) => void,
   onAutoTest: ( tname: string ) => void,
   offAutoTest: ( tname: string ) => void,
-  closeMovingWindow: () => void,
   insertDB: ( lat: number, lng: number, d: signalDataInterface ) => void,
   url: string,
 }> = (props) => {

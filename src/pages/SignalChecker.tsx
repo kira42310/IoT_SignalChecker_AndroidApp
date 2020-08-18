@@ -33,7 +33,7 @@ import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
 import { signalDataInterface } from "../AppFunction";
 
-const { Storage, App, BackgroundTask, } = Plugins;
+const { Storage, App, BackgroundTask, Network } = Plugins;
 
 App.addListener( 'appStateChange', (state) => {
   if( !state.isActive ){
@@ -194,7 +194,7 @@ const SignalChecker: React.FC = () => {
       return ;
     }
     const body = Object.assign({
-      username: await (await Storage.get({ key: 'DBToken' })).value,
+      token: await (await Storage.get({ key: 'DBToken' })).value,
       imei: imei,
       imsi: imsi,
       mode: mode,
@@ -276,8 +276,10 @@ const SignalChecker: React.FC = () => {
     setIntervalCheckConnect();
   };
 
-  const closeMovingWindow = () => {
-    setMovingWindow( false );
+  const movingWindowCheckNetwork = async () => {
+    const s = await Network.getStatus();
+    if( s.connected ) setMovingWindow( false );
+    else setError( 'No internet access!' );
   }
 
   const disableModule = async () => {
@@ -419,7 +421,7 @@ const SignalChecker: React.FC = () => {
           <IonToolbar>
             <IonTitle>Moving Test</IonTitle>
             <IonButtons slot="end">
-              <IonButton disabled={ movingWindowClose } onClick={ () => setMovingWindow(false) }>Close</IonButton>
+              <IonButton disabled={ movingWindowClose } onClick={ () => movingWindowCheckNetwork() }>Close</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -428,7 +430,6 @@ const SignalChecker: React.FC = () => {
           onAutoTest={ onAutoTest }
           offAutoTest={ offAutoTest }
           insertDB={ insertDB }
-          closeMovingWindow={ closeMovingWindow }
           url={ rpiDestination! } 
         />
       </IonModal>

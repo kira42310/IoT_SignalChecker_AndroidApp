@@ -15,10 +15,14 @@ import {
     IonRow,
     IonCol,
     IonButton,
-    IonIcon, 
+    IonIcon,
+    useIonViewWillEnter, 
 } from "@ionic/react";
+import { Plugins } from "@capacitor/core";
 import { enterOutline } from "ionicons/icons";
 import MapInterface from "../components/MapInterface";
+
+const { Network } = Plugins;
 
 const MapInfo: React.FC = () => {
 
@@ -26,6 +30,16 @@ const MapInfo: React.FC = () => {
   const [ address, setAddress ] = useState<string>("");
   const [ newCenter, setNewCenter ] = useState<string>("");
   const [ showValue, setShowValue ] = useState< "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" >("scRSSI");
+  const [ networkStatus, setNetworkStatus ] = useState<boolean>( false );
+
+  useIonViewWillEnter( () => {
+    getNetworkStatus();
+  });
+
+  const getNetworkStatus = async () => {
+    const s = await Network.getStatus();
+    setNetworkStatus( s.connected );
+  };
 
   const clearError = () => {
     setError("")
@@ -53,7 +67,11 @@ const MapInfo: React.FC = () => {
             </IonCol>
           </IonRow>
         </IonGrid>
-        <MapInterface showValue={showValue} address={ newCenter } />
+        {/* <MapInterface showValue={showValue} address={ newCenter } />: */}
+        { networkStatus?
+          <MapInterface showValue={showValue} address={ newCenter } />:
+          <p>No internet access!</p>
+        }
         <IonCard>
           <IonSelect value={showValue} interface="action-sheet" onIonChange={ e => setShowValue(e.detail.value) }>
             <IonSelectOption value="scRSSI">RSSI</IonSelectOption>
