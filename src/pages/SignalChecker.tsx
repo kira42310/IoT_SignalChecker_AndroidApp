@@ -20,10 +20,8 @@ import {
   IonIcon,
   useIonViewDidEnter,
   useIonViewWillLeave,
-  IonToast,
-  IonBackdrop,
 } from "@ionic/react";
-import { settings, ellipse, refresh } from "ionicons/icons";
+import { settings, ellipse, } from "ionicons/icons";
 import { Plugins, } from "@capacitor/core";
 import ConnectionSetting from "../components/ConnectionSetting";
 import PingSection from "../components/PingSection";
@@ -65,6 +63,7 @@ const SignalChecker: React.FC = () => {
   const [ imsi, setIMSI ] = useState<string>();
   const [ mode, setMode ] = useState<string>();
   const [ band, setBand ] = useState<string>();
+  const [ apn, setAPN ] = useState<string>();
   const [ ip, setIP ] = useState<string>();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
@@ -74,7 +73,6 @@ const SignalChecker: React.FC = () => {
   const [ movingWindowClose, setMovingWindowClose ] = useState<boolean>( false );
   const [ manualWindow, setManualWindow ] = useState<boolean>( false );
   const [ loading, setLoading ] = useState<boolean>(false);
-  const [ toastRecon, setToastRecon ] = useState<boolean>(true);
   const timerId = useRef<any>();
   const aController = useRef<AbortController>();
 
@@ -85,7 +83,6 @@ const SignalChecker: React.FC = () => {
   useIonViewWillLeave( () => {
     aController.current!.abort();
     clearInterval( timerId.current );
-    setToastRecon( false );
   });
 
   const getURL = () => {
@@ -117,7 +114,6 @@ const SignalChecker: React.FC = () => {
     if( result === "P" ){
       setIsConnect( true );
       setColorStatus( 'success' );
-      setToastRecon( false );
       const data = await fetch( "http://" + url + "/info" )
         .then(( response ) => response.json() )
         .then(( data ) => { return data })
@@ -127,18 +123,17 @@ const SignalChecker: React.FC = () => {
       setMode( data[2] );
       setBand( data[3] );
       setIP( data[4] );
+      setAPN( data[5] );
     }
     else if( result === "F" ){
       clearInterval( timerId.current );
       setIsConnect( false );
       setColorStatus( 'warning' );
-      setToastRecon( true );
     }
     else if( result === undefined ){
       clearInterval( timerId.current );
       setIsConnect( false );
       setColorStatus( 'danger' );
-      if( window.location.pathname === "/signalchecker" ) setToastRecon( true );
     }
   };
 
@@ -167,7 +162,6 @@ const SignalChecker: React.FC = () => {
     if( res && res !== "F" ){
       setIsConnect( true );
       setColorStatus( 'success' );
-      setToastRecon( false );
       setIMEI( res[0] );
       setIMSI( res[1] );
       setMode( res[2] );
@@ -178,12 +172,10 @@ const SignalChecker: React.FC = () => {
     else if( res === "F" ){
       setIsConnect( false );
       setColorStatus( 'warning' );
-      setToastRecon( true );
     }
     else{
       setIsConnect( false );
       setColorStatus( 'danger' );
-      setToastRecon( true );
     }
     setLoading( false );
   };
@@ -212,11 +204,14 @@ const SignalChecker: React.FC = () => {
       .then((response) => response.json())
       .then((result) => { return result })
       .catch(error => console.log(error));
+    // let url = await getURL();
+    // url = 'http://' + url + '/mqtt&url=' + AppSettings.DB_LOCATION + '&data=' + data;
+    // const res = await fetch( url );
     if( res ) setError('Insert database success');
     else setError('Failed to insert database');
   };
 
-  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, ip: string, destination: string ) => {
+  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, ip: string, apn: string, destination: string ) => {
     setIsConnect(true);
     setColorStatus( 'success' );
     setIMEI(imei);
@@ -224,6 +219,7 @@ const SignalChecker: React.FC = () => {
     setMode(mode);
     setBand(band);
     setIP(ip);
+    setAPN( apn );
     setRPiDestination(destination);
     setConnectionWindow(false);
     setIntervalCheckConnect();
@@ -241,7 +237,6 @@ const SignalChecker: React.FC = () => {
     if( res === "F" ){
       setIsConnect( false );
       setColorStatus( 'warning' );
-      setToastRecon( true );
       setLoading( false );
       setError( "Cannot Connect to Serving Cell" );
       return;
@@ -249,7 +244,6 @@ const SignalChecker: React.FC = () => {
     else if( res === "D" ){
       setIsConnect( false );
       setColorStatus( 'danger' );
-      setToastRecon( true );
       setLoading( false );
       setError( "Cannot Connect to RPi Device" );
       return;
@@ -344,31 +338,48 @@ const SignalChecker: React.FC = () => {
                   { isConnect? <IonChip color="primary">{ip}</IonChip>:<IonChip color="danger">X</IonChip> }
                 </IonCol>
               </IonRow>
+              <IonRow>
+                <IonCol class="ion-align-self-center"><IonLabel>APN:</IonLabel></IonCol>
+                <IonCol class="ion-align-self-center">
+                  { isConnect? <IonChip color="primary">{apn}</IonChip>:<IonChip color="danger">X</IonChip> }
+                </IonCol>
+              </IonRow>
             </IonCardContent>
           </IonCard>
           <IonRow>
             <IonCol>
+              <IonButton onClick={ () => reconnect() } disabled={ isConnect }  expand="full">Reconnect</IonButton>
+              {/* <IonButton onClick={ () => setPingWindow(true) }  expand="full">Ping</IonButton> */}
+            </IonCol>
+          </IonRow>
+          <IonRow>
+            <IonCol>
               <IonButton onClick={ () => setPingWindow(true) } disabled={ !isConnect }  expand="full">Ping</IonButton>
+              {/* <IonButton onClick={ () => setPingWindow(true) }  expand="full">Ping</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => setStaticWindow( true ) } disabled={ !isConnect } expand="full">Static Test</IonButton>
+              <IonButton onClick={ () => setStaticWindow( true ) } disabled={ !isConnect } expand="full">Auto Static Test</IonButton>
+              {/* <IonButton onClick={ () => setStaticWindow( true ) } expand="full">Static Test</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Moving Test</IonButton>
+              <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton>
+              {/* <IonButton onClick={ () => setMovingWindow( true ) } expand="full">Moving Test</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => setManualWindow( true ) } disabled={ !isConnect } expand="full">Manual Test</IonButton>
+              {/* <IonButton onClick={ () => setManualWindow( true ) } expand="full">Manual Test</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => disableModule() } disabled={ !isConnect } expand="full" color="danger">Disable Module</IonButton>
+              {/* <IonButton onClick={ () => disableModule() } expand="full" color="danger">Disable Module</IonButton> */}
             </IonCol>
           </IonRow>
         </IonGrid>
@@ -437,7 +448,7 @@ const SignalChecker: React.FC = () => {
       <IonModal isOpen={ manualWindow }>
         <IonHeader translucent>
           <IonToolbar>
-            <IonTitle>Moving Test</IonTitle>
+            <IonTitle>Manual Test</IonTitle>
             <IonButtons slot="end">
               <IonButton onClick={ () => setManualWindow(false) }>Close</IonButton>
             </IonButtons>
@@ -450,11 +461,6 @@ const SignalChecker: React.FC = () => {
         />
       </IonModal>
 
-      <IonToast 
-        isOpen={ toastRecon } 
-        cssClass="tabs-bottom"
-        buttons={[{ icon: refresh, handler: () => { setToastRecon( false ); reconnect(); }}]}
-        message="Reconnect" />
       <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
       <IonLoading 
         isOpen={ loading } 
@@ -464,8 +470,7 @@ const SignalChecker: React.FC = () => {
           setLoading( false );
           aController.current?.abort();
         }}
-        />
-      <IonBackdrop tappable={ false } />
+      />
     </IonPage>
   );
 };

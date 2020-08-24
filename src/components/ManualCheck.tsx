@@ -59,10 +59,8 @@ const ManualCheck: React.FC<{
     setData( res );
     setSignalColor( convertSignalToColor( res ));
       
-    if( insertDB && !location.code ){
-      props.insertDB( location.coords.latitude, location.coords.longitude, res );
-    }
-    else setErrorConnection( 'No location service, insert DB failed' );
+    if( location.code ) setErrorConnection( 'No location service, insert DB failed' );
+    else if( insertDB ) props.insertDB( location.coords.latitude, location.coords.longitude, res );
     saveSession( res );
     setLoading(false);
   };

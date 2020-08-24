@@ -32,15 +32,14 @@ const PingSection: React.FC<{
     const url = ("http://" + props.destination + "/ping?site=" + site )
     var result:any;
     setLoading(true);
+    await fetch( 'http://' + props.destination + '/pingactivate' );
     for( var i = 0; i <= retry; i++){
-      const controller = new AbortController();
-      const signal = controller.signal;
-      setTimeout(() => controller.abort(), AppSettings.CONNECT_TIMEOUT);
-      result = await fetch(url, {signal})
+      result = await fetch( url )
         .then( (response) => response.json() )
         .then( (data) => { return data; })
       if( result ){ break; }
     };
+    await fetch( 'http://' + props.destination + '/pingdeactivate');
     setLoading(false);
     if( result[0] === "F" ) { setErrorConnection("Cannot Ping!"); return ;}
     setData({ send: result[0], recv: result[1], avg: result[2] });

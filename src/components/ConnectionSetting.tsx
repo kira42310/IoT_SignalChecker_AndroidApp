@@ -18,7 +18,7 @@ import { Plugins } from "@capacitor/core";
 const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
-  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, rpiDestination: string) => void;
+  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, apn: string, rpiDestination: string) => void;
 }> = (props) => {
   const [ rpiIP, setRPiIP ] = useState<string>( AppSettings.RPI_IP );
   const [ rpiPort, setRPiPort ] = useState<number>( AppSettings.RPI_PORT );
@@ -93,7 +93,7 @@ const ConnectionSetting: React.FC<{
     if( res === "F" ) { setErrorConnection("Cannot connect to Cell!"); return ; }
     else if( signal.aborted ) { setErrorConnection("Cannt connect to RPi"); return ; }
     setLoading( false );
-    props.onChangeIsConnect( res[0], res[1], res[2], res[3], res[4], rpiIP + ":" + rpiPort );
+    props.onChangeIsConnect( res[0], res[1], res[2], res[3], res[4], res[5], rpiIP + ":" + rpiPort );
   };
 
   const resetModule = async () => {
@@ -139,8 +139,8 @@ const ConnectionSetting: React.FC<{
       .then( data => { return data })
       .catch( e => console.log(e) );
     setLoading( false );
-    if( res === "P" ){ 
-      setAPNValue( apn );
+    if( res !== "F" ){ 
+      setAPNValue( res[0] );
       setErrorConnection( "Set APN success" );
     }
     else if( res === "F" ) setErrorConnection( "Set APN Failed!" );
