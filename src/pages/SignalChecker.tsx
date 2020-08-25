@@ -55,7 +55,7 @@ App.addListener( 'appStateChange', (state) => {
 
 const SignalChecker: React.FC = () => {
 
-  const [ isConnect, setIsConnect ] = useState<boolean>(false);
+  const [ isConnect, setIsConnect ] = useState<boolean>(true);
   const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();

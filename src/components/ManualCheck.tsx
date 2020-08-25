@@ -11,6 +11,7 @@ import {
   IonCardSubtitle,
   IonCardHeader,
   IonChip,
+  IonContent,
 } from "@ionic/react";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
@@ -106,101 +107,103 @@ const ManualCheck: React.FC<{
   };
 
   return (
-    <IonGrid fixed={ true }>
-      <IonRow>
-        <IonCol>
-          <IonButton onClick={ () => setStartTestAlert( true ) } expand="full">Test</IonButton>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>Serving Cell ID: { !data? "X": data.scPCID }</IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol size="6" class="ion-text-center">
-          <IonCard color={ !data? "black": signalColor?.scRSSI }>
-            <IonCardContent>RSSI: { !data? "00": data.scRSSI }</IonCardContent>
-          </IonCard>
-        </IonCol>
-        <IonCol size="6" class="ion-text-center">
-          <IonCard color={ !data? "black": signalColor?.scRSRP }>
-            <IonCardContent>RSRP: { !data? "00": data.scRSRP }</IonCardContent>
-          </IonCard>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol size="6" class="ion-text-center">
-          <IonCard color={ !data? "black": signalColor?.scSINR }>
-            <IonCardContent>SINR: { !data? "00": data.scSINR }</IonCardContent>
-          </IonCard>
-        </IonCol>
-        <IonCol size="6" class="ion-text-center">
-          <IonCard color={ !data? "black": signalColor?.scRSRQ }>
-            <IonCardContent>RSRQ: { !data? "00": data.scRSRQ }</IonCardContent>
-          </IonCard>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>Neighbor Cell</IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol size="4">
-          <IonCard color="light" class="ion-text-center">
-            <IonCardHeader>
-              <IonCardSubtitle>
-                1st Cell<br/><IonChip>{ !data? "X": data.n1PCID }</IonChip>
-              </IonCardSubtitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n1RSSI }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n1RSRP }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n1SINR }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n1RSRQ }</IonChip>
-            </IonCardContent>
-          </IonCard>
-        </IonCol>
-        <IonCol size="4">
-          <IonCard color="light" class="ion-text-center">
-            <IonCardHeader>
-              <IonCardSubtitle>
-                2nd Cell<br/><IonChip>{ !data? "X": data.n2PCID }</IonChip>
-              </IonCardSubtitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n2RSSI }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n2RSRP }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n2SINR }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n2RSRQ }</IonChip>
-            </IonCardContent>
-          </IonCard>
-        </IonCol>
-        <IonCol size="4">
-          <IonCard color="light" class="ion-text-center">
-            <IonCardHeader>
-              <IonCardSubtitle>
-                3rd Cell<br/><IonChip>{ !data? "X": data.n3PCID }</IonChip>
-              </IonCardSubtitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n3RSSI }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n3RSRP }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n3SINR }</IonChip><br/>
-              <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n3RSRQ }</IonChip>
-            </IonCardContent>
-          </IonCard>
-        </IonCol>
-      </IonRow>
+    <IonContent>
+      <IonGrid fixed={ true }>
+        <IonRow>
+          <IonCol>
+            <IonButton onClick={ () => setStartTestAlert( true ) } expand="full">Test</IonButton>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>Serving Cell ID: { !data? "X": data.scPCID }</IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol size="6" class="ion-text-center">
+            <IonCard color={ !data? "black": signalColor?.scRSSI }>
+              <IonCardContent>RSSI: { !data? "00": data.scRSSI }</IonCardContent>
+            </IonCard>
+          </IonCol>
+          <IonCol size="6" class="ion-text-center">
+            <IonCard color={ !data? "black": signalColor?.scRSRP }>
+              <IonCardContent>RSRP: { !data? "00": data.scRSRP }</IonCardContent>
+            </IonCard>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol size="6" class="ion-text-center">
+            <IonCard color={ !data? "black": signalColor?.scSINR }>
+              <IonCardContent>SINR: { !data? "00": data.scSINR }</IonCardContent>
+            </IonCard>
+          </IonCol>
+          <IonCol size="6" class="ion-text-center">
+            <IonCard color={ !data? "black": signalColor?.scRSRQ }>
+              <IonCardContent>RSRQ: { !data? "00": data.scRSRQ }</IonCardContent>
+            </IonCard>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>Neighbor Cell</IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol size="4">
+            <IonCard color="light" class="ion-text-center">
+              <IonCardHeader>
+                <IonCardSubtitle>
+                  1st Cell<br/><IonChip>{ !data? "X": data.n1PCID }</IonChip>
+                </IonCardSubtitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n1RSSI }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n1RSRP }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n1SINR }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n1RSRQ }</IonChip>
+              </IonCardContent>
+            </IonCard>
+          </IonCol>
+          <IonCol size="4">
+            <IonCard color="light" class="ion-text-center">
+              <IonCardHeader>
+                <IonCardSubtitle>
+                  2nd Cell<br/><IonChip>{ !data? "X": data.n2PCID }</IonChip>
+                </IonCardSubtitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n2RSSI }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n2RSRP }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n2SINR }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n2RSRQ }</IonChip>
+              </IonCardContent>
+            </IonCard>
+          </IonCol>
+          <IonCol size="4">
+            <IonCard color="light" class="ion-text-center">
+              <IonCardHeader>
+                <IonCardSubtitle>
+                  3rd Cell<br/><IonChip>{ !data? "X": data.n3PCID }</IonChip>
+                </IonCardSubtitle>
+              </IonCardHeader>
+              <IonCardContent>
+                <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n3RSSI }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n3RSRP }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n3SINR }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n3RSRQ }</IonChip>
+              </IonCardContent>
+            </IonCard>
+          </IonCol>
+        </IonRow>
 
-      <IonAlert 
-        isOpen={ startTestAlert }
-        message={ 'Do you want to insert data to Database?' }
-        buttons={[
-          { text: "Yes", handler: () => startTest( true ) },
-          { text: "No", handler: () => startTest( false ) }
-        ]}
-      />
-      <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
-      <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
-    </IonGrid>
+        <IonAlert 
+          isOpen={ startTestAlert }
+          message={ 'Do you want to insert data to Database?' }
+          buttons={[
+            { text: "Yes", handler: () => startTest( true ) },
+            { text: "No", handler: () => startTest( false ) }
+          ]}
+        />
+        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
+        <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
+      </IonGrid>
+    </IonContent>
   );
 };
 export default ManualCheck;

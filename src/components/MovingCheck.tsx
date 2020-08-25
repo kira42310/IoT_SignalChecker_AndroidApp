@@ -129,7 +129,7 @@ const MovingCheck: React.FC<{
 
   const containerStyle = {
     width: '100%',
-    height: '80%',
+    height: '75%',
   }
 
   const convertDataToIcon = ( data: number ) => {

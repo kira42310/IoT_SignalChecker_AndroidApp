@@ -11,6 +11,7 @@ import {
   IonLoading,
   IonCard,
   IonCardContent,
+  IonContent,
 } from "@ionic/react";
 import { AppSettings } from "../AppSettings"
 
@@ -47,40 +48,42 @@ const PingSection: React.FC<{
   };
 
   return (
-    <IonGrid>
-      <IonRow>
-        <IonCol size="10" class="ion-margin-top">
-          <IonLabel>Site</IonLabel>
-          <IonItem>
-            <IonInput value={site} onIonChange={ e => setSite(e.detail.value!) } debounce={500} />
-          </IonItem>
-        </IonCol>
-        <IonCol size="2" class="ion-margin-top">
-          <IonLabel>Retry</IonLabel>
-          <IonItem>
-            <IonInput value={retry} onIonChange={ e => setRetry(+e.detail.value!) } debounce={500} type="number" />
-          </IonItem>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol className="ion-margin-top">
-          <IonButton onClick={pingSite} expand="full" size="large">Ping</IonButton>
-        </IonCol>
-      </IonRow>
-      { showData &&
-      <IonCard>
-        <IonCardContent>
-          <IonRow>
-            <IonCol size="3"><IonLabel>Send:</IonLabel>{data.send}</IonCol>
-            <IonCol size="3"><IonLabel>Receive:</IonLabel>{data.recv}</IonCol>
-            <IonCol size="6"><IonLabel>Avg Response:</IonLabel>{data.avg}<IonLabel>ms</IonLabel></IonCol>
-          </IonRow>
-        </IonCardContent>
-      </IonCard>
-      }
-      <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
-      <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
-    </IonGrid>
+    <IonContent>
+      <IonGrid>
+        <IonRow>
+          <IonCol size="10" class="ion-margin-top">
+            <IonLabel>Site</IonLabel>
+            <IonItem>
+              <IonInput value={site} onIonChange={ e => setSite(e.detail.value!) } debounce={500} />
+            </IonItem>
+          </IonCol>
+          <IonCol size="2" class="ion-margin-top">
+            <IonLabel>Retry</IonLabel>
+            <IonItem>
+              <IonInput value={retry} onIonChange={ e => setRetry(+e.detail.value!) } debounce={500} type="number" />
+            </IonItem>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol className="ion-margin-top">
+            <IonButton onClick={pingSite} expand="full" size="large">Ping</IonButton>
+          </IonCol>
+        </IonRow>
+        { showData &&
+        <IonCard>
+          <IonCardContent>
+            <IonRow>
+              <IonCol size="3"><IonLabel>Send:</IonLabel>{data.send}</IonCol>
+              <IonCol size="3"><IonLabel>Receive:</IonLabel>{data.recv}</IonCol>
+              <IonCol size="6"><IonLabel>Avg Response:</IonLabel>{data.avg}<IonLabel>ms</IonLabel></IonCol>
+            </IonRow>
+          </IonCardContent>
+        </IonCard>
+        }
+        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
+        <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
+      </IonGrid>
+    </IonContent>
   );
 };
 export default PingSection;
