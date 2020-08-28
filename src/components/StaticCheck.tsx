@@ -107,15 +107,16 @@ const StaticCheck: React.FC<{
     setLoading(false);
   };
 
-  const startTest = () => {
+  const startTest = async () => {
     setStartTestAlert( false );
     props.onAutoTest( 'static' );
     setStartStopBtn( false );
 
+    let url = 'http://' + props.url + '/starttest?interval=';
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
-    
+    const res = await fetch( url, { signal });
   };
 
   const stopTest = () => {};
