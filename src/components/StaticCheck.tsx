@@ -107,30 +107,43 @@ const StaticCheck: React.FC<{
     setLoading(false);
   };
 
-  const startTest = ( insertDB: boolean = false ) => {
+  const startTest = () => {
     setStartTestAlert( false );
-    props.onAutoTest( "static" );
+    props.onAutoTest( 'static' );
     setStartStopBtn( false );
-    clearMeasure();
-    setInsertData( insertDB )
-    const itv: number = ( +( intervalHour ) * 3600000 ) + ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
-    signalStrength()
-    const id = setInterval( () => signalStrength() , itv );
-    trackerInterval.current = id;
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+    
   };
 
-  const stopTest = async () => {
-    clearInterval( trackerInterval.current );
-    if( insertData && data !== null ) {
-      const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
-      if( !location.code ) props.insertDB( location.coords.latitude, location.coords.longitude, data );
-      else setErrorConnection( 'No location service, insert DB failed' );
-      setInsertData( false );
-    }
-    sessionStorage.setItem( 'staticTestData', JSON.stringify( data ) );
-    props.offAutoTest( "static" );
-    setStartStopBtn( true );
-  };
+  const stopTest = () => {};
+
+  // const startTest = ( insertDB: boolean = false ) => {
+  //   setStartTestAlert( false );
+  //   props.onAutoTest( "static" );
+  //   setStartStopBtn( false );
+  //   clearMeasure();
+  //   setInsertData( insertDB )
+  //   const itv: number = ( +( intervalHour ) * 3600000 ) + ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
+  //   signalStrength()
+  //   const id = setInterval( () => signalStrength() , itv );
+  //   trackerInterval.current = id;
+  // };
+
+  // const stopTest = async () => {
+  //   clearInterval( trackerInterval.current );
+  //   if( insertData && data !== null ) {
+  //     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
+  //     if( !location.code ) props.insertDB( location.coords.latitude, location.coords.longitude, data );
+  //     else setErrorConnection( 'No location service, insert DB failed' );
+  //     setInsertData( false );
+  //   }
+  //   sessionStorage.setItem( 'staticTestData', JSON.stringify( data ) );
+  //   props.offAutoTest( "static" );
+  //   setStartStopBtn( true );
+  // };
 
   const prepareDataAndAverage = ( newData: any ): signalDataInterface => {
     averageCounter.current += 1;
@@ -438,14 +451,14 @@ const StaticCheck: React.FC<{
           </IonCol>
         </IonRow>
 
-        <IonAlert 
+        {/* <IonAlert 
           isOpen={ startTestAlert }
           message={ 'Do you want to insert data to Database?' }
           buttons={[
             { text: "Yes", handler: () => startTest( true ) },
             { text: "No", handler: () => startTest( false ) }
           ]}
-        />
+        /> */}
         <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
         <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
       </IonGrid>

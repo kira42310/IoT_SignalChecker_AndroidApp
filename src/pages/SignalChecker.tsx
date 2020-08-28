@@ -22,7 +22,7 @@ import {
   useIonViewWillLeave,
 } from "@ionic/react";
 import { settings, ellipse, } from "ionicons/icons";
-import { Plugins, } from "@capacitor/core";
+import { Plugins, PermissionType, Geolocation, } from "@capacitor/core";
 import ConnectionSetting from "../components/ConnectionSetting";
 import PingSection from "../components/PingSection";
 import StaticCheck from "../components/StaticCheck";
@@ -31,31 +31,11 @@ import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
 import { signalDataInterface } from "../AppFunction";
 
-const { Storage, App, BackgroundTask, Network } = Plugins;
-
-App.addListener( 'appStateChange', (state) => {
-  if( !state.isActive ){
-    let taskId = BackgroundTask.beforeExit( async () => {
-      let url: string;
-      const ip = sessionStorage.getItem( 'rpiIP' );
-      const port = sessionStorage.getItem( 'rpiPort' );
-      if( ip && port ) { url = ip + ":" + port }
-      else { url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT }
-      const controller = new AbortController();
-      const signal = controller.signal;
-      setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
-      await fetch( 'http://'+url+'/disable', { signal })
-        .then( response => response.json() )
-        .then( d => { return d } )
-        .catch( e => console.log( e ) );
-      BackgroundTask.finish({ taskId });
-    });
-  }
-});
+const { Storage, Network, } = Plugins;
 
 const SignalChecker: React.FC = () => {
 
-  const [ isConnect, setIsConnect ] = useState<boolean>(true);
+  const [ isConnect, setIsConnect ] = useState<boolean>(false);
   const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
@@ -73,6 +53,7 @@ const SignalChecker: React.FC = () => {
   const [ movingWindowClose, setMovingWindowClose ] = useState<boolean>( false );
   const [ manualWindow, setManualWindow ] = useState<boolean>( false );
   const [ loading, setLoading ] = useState<boolean>(false);
+  const [ info, setInfo ] = useState<string>('');
   const timerId = useRef<any>();
   const aController = useRef<AbortController>();
 
@@ -167,6 +148,16 @@ const SignalChecker: React.FC = () => {
       setMode( res[2] );
       setBand( res[3] );
       setIP( res[4] );
+      const token = await Storage.get({ key: 'DBToken' });
+      if( token ) {
+        setInfo( 
+          token.value + '_' +
+          res[0] + '_' + 
+          res[1] + '_' +
+          res[2] + '_' +
+          res[3] + '_'
+        );
+      }
       setIntervalCheckConnect();
     }
     else if( res === "F" ){
@@ -211,7 +202,7 @@ const SignalChecker: React.FC = () => {
     else setError('Failed to insert database');
   };
 
-  const changeIsConnect = ( imei: string, imsi: string, mode: string, band: string, ip: string, apn: string, destination: string ) => {
+  const changeIsConnect = async ( imei: string, imsi: string, mode: string, band: string, ip: string, apn: string, destination: string ) => {
     setIsConnect(true);
     setColorStatus( 'success' );
     setIMEI(imei);
@@ -221,6 +212,16 @@ const SignalChecker: React.FC = () => {
     setIP(ip);
     setAPN( apn );
     setRPiDestination(destination);
+    const token = await Storage.get({ key: 'DBToken' });
+    if( token ) {
+      setInfo( 
+        token.value + '_' +
+        imei + '_' + 
+        imsi + '_' +
+        mode + '_' +
+        band + '_'
+      );
+    }
     setConnectionWindow(false);
     setIntervalCheckConnect();
   };
@@ -440,7 +441,7 @@ const SignalChecker: React.FC = () => {
           Disconnect={ Disconnect }
           onAutoTest={ onAutoTest }
           offAutoTest={ offAutoTest }
-          insertDB={ insertDB }
+          info={ info }
           url={ rpiDestination! } 
         />
       </IonModal>
@@ -456,7 +457,7 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <ManualCheck
           Disconnect={ Disconnect }
-          insertDB={ insertDB }
+          info={ info }
           url={ rpiDestination! } 
         />
       </IonModal>

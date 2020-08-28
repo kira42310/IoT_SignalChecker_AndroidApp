@@ -23,7 +23,7 @@ const MovingCheck: React.FC<{
   Disconnect: ( res: string) => void,
   onAutoTest: ( tname: string ) => void,
   offAutoTest: ( tname: string ) => void,
-  insertDB: ( lat: number, lng: number, d: signalDataInterface ) => void,
+  info: string,
   url: string,
 }> = (props) => {
 
@@ -55,10 +55,27 @@ const MovingCheck: React.FC<{
 
   const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
+    const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
+
+    let data = '';
+    if( insertDB && location.code ){ 
+      setErrorConnection( 'No location service, insert DB failed' );
+      insertDB = false;
+    }
+    else if( insertDB && props.info === '' ){
+      setErrorConnection( 'No database token, insert database failed');
+      insertDB = false;
+    }
+    else data = props.info + '_' + location.coords.latitude + '_' + location.coords.longitude + '_';
+
+    let url = 'http://' + props.url + '/signalStrength?insert=';
+    if( insertDB ) url = url + 'y&dblocation=' + AppSettings.DB_LOCATION + '&data=' + data;
+    else url = url + 'n';
+
     const controller = new AbortController();
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
-    const res = await fetch("http://" + props.url + "/signalStrength", { signal })
+    const res = await fetch( url, { signal })
       .then((response) => response.json())
       .then((data) => { return data });
     if( res === "F" ){
@@ -73,15 +90,10 @@ const MovingCheck: React.FC<{
       props.Disconnect("D");
       return;
     }
-    const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
     
     if( !location.code ){
       markers.current = [ ...markers.current, convertToMarkerData( res, location)];
       setMapCenter( new google.maps.LatLng( location.coords.latitude, location.coords.longitude ));
-
-      if( insertDB ){
-        props.insertDB( location.coords.latitude, location.coords.longitude, res );
-      }
     }
     else setErrorConnection( 'No location service, operation failed' );
     

@@ -11,6 +11,7 @@ import {
   IonButton,
   IonAlert,
   IonLoading,
+  IonContent,
 } from "@ionic/react";
 import { AppSettings } from "../AppSettings";
 import { Plugins } from "@capacitor/core";
@@ -161,120 +162,122 @@ const ConnectionSetting: React.FC<{
   };
 
   return (
-    <IonGrid>
-      <IonRow>
-        <IonCol>
-          <IonLabel>Mode</IonLabel>
-          <IonSegment value={mode} onIonChange={(e) => setMode(e.detail.value!)}>
-            <IonSegmentButton value="0">
-              <IonLabel>Auto</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="3">
-              <IonLabel>NB-IoT</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="2">
-              <IonLabel>Cat-M1</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonLabel>Band</IonLabel>
-          <IonSegment value={band} onIonChange={(e) => setBand(e.detail.value!)}>
-            <IonSegmentButton value="F">
-              <IonLabel>Auto</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="1">
-              <IonLabel>900MHz</IonLabel>
-            </IonSegmentButton>
-            <IonSegmentButton value="2">
-              <IonLabel>1800MHz</IonLabel>
-            </IonSegmentButton>
-          </IonSegment>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol size="8" className="ion-margin-top">
-          <IonLabel>Rasspberry Pi IP</IonLabel>
-          <IonItem>
-            <IonInput value={rpiIP} onIonChange={(e) => setRPiIP(e.detail.value!)} color={validateIPAddress(rpiIP) ? "success" : "danger"} debounce={500} />
-          </IonItem>
-        </IonCol>
-        <IonCol size="4" className="ion-margin-top">
-          <IonLabel>Port</IonLabel>
-          <IonItem>
-            <IonInput type="number" value={rpiPort} onIonChange={(e) => setRPiPort(+e.detail.value!)} debounce={500} />
-          </IonItem>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonButton onClick={ defaultValue } expand="full">Default Value</IonButton>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonButton onClick={ resetModule } expand="full">Reset Module</IonButton>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonItem button={ true } onClick={ () => setAPNAlert( true ) } >
-            <IonLabel>APN</IonLabel>
-            <p slot="end">{ apn }</p>
-          </IonItem>
-        </IonCol>
-      </IonRow>
-      <IonRow>
-        <IonCol>
-          <IonItem button={ true } onClick={ () => setTokenAlert( true ) } >
-            <IonLabel>Database Token</IonLabel>
-            <p slot="end">{ dbToken }</p>
-          </IonItem>
-        </IonCol>
-      </IonRow>
+    <IonContent>
+      <IonGrid>
+        <IonRow>
+          <IonCol>
+            <IonLabel>Mode</IonLabel>
+            <IonSegment value={mode} onIonChange={(e) => setMode(e.detail.value!)}>
+              <IonSegmentButton value="0">
+                <IonLabel>Auto</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="3">
+                <IonLabel>NB-IoT</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="2">
+                <IonLabel>Cat-M1</IonLabel>
+              </IonSegmentButton>
+            </IonSegment>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>
+            <IonLabel>Band</IonLabel>
+            <IonSegment value={band} onIonChange={(e) => setBand(e.detail.value!)}>
+              <IonSegmentButton value="F">
+                <IonLabel>Auto</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="1">
+                <IonLabel>900MHz</IonLabel>
+              </IonSegmentButton>
+              <IonSegmentButton value="2">
+                <IonLabel>1800MHz</IonLabel>
+              </IonSegmentButton>
+            </IonSegment>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol size="8" className="ion-margin-top">
+            <IonLabel>Rasspberry Pi IP</IonLabel>
+            <IonItem>
+              <IonInput value={rpiIP} onIonChange={(e) => setRPiIP(e.detail.value!)} color={validateIPAddress(rpiIP) ? "success" : "danger"} debounce={500} />
+            </IonItem>
+          </IonCol>
+          <IonCol size="4" className="ion-margin-top">
+            <IonLabel>Port</IonLabel>
+            <IonItem>
+              <IonInput type="number" value={rpiPort} onIonChange={(e) => setRPiPort(+e.detail.value!)} debounce={500} />
+            </IonItem>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>
+            <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>
+            <IonButton onClick={ defaultValue } expand="full">Default Value</IonButton>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>
+            <IonButton onClick={ resetModule } expand="full">Reset Module</IonButton>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>
+            <IonItem button={ true } onClick={ () => setAPNAlert( true ) } >
+              <IonLabel>APN</IonLabel>
+              <p slot="end">{ apn }</p>
+            </IonItem>
+          </IonCol>
+        </IonRow>
+        <IonRow>
+          <IonCol>
+            <IonItem button={ true } onClick={ () => setTokenAlert( true ) } >
+              <IonLabel>Database Token</IonLabel>
+              <p slot="end">{ dbToken }</p>
+            </IonItem>
+          </IonCol>
+        </IonRow>
 
-      <IonAlert 
-        isOpen={ apnAlert }
-        message="Set APN"
-        inputs={[{ name: "apn", value: apn }]}
-        buttons={[
-          { text: "Set", handler: (data: any) => { setAPN( data.apn ); setAPNAlert( false ); } }, 
-          { text: "Cancel", handler: () => { setAPNAlert( false ) } }
-        ]}
-        onDidDismiss={ () => setAPNAlert( false ) }
-      />
-      <IonAlert 
-        isOpen={ tokenAlert }
-        message="Set DB Token"
-        inputs={[{ name: "token", value: dbToken }]}
-        buttons={[
-          { text: "Set", handler: (data: any) => { saveToken( data.token ); setTokenAlert( false ); } }, 
-          { text: "Cancel", handler: () => { setTokenAlert( false ) } }
-        ]}
-        onDidDismiss={ () => setTokenAlert( false ) }
-      />
-      <IonAlert 
-        isOpen={!!errorConnection} 
-        message={errorConnection} 
-        buttons={[{ text: "Okey", handler: clearErrorConnection }]} 
-      />
-      <IonLoading 
-        isOpen={loading} 
-        message={'Please Wait...'} 
-        backdropDismiss={ true }
-        onDidDismiss={ () => {
-          setLoading( false );
-          connectController.current!.abort();
-        }}
-      />
-    </IonGrid>
+        <IonAlert 
+          isOpen={ apnAlert }
+          message="Set APN"
+          inputs={[{ name: "apn", value: apn }]}
+          buttons={[
+            { text: "Set", handler: (data: any) => { setAPN( data.apn ); setAPNAlert( false ); } }, 
+            { text: "Cancel", handler: () => { setAPNAlert( false ) } }
+          ]}
+          onDidDismiss={ () => setAPNAlert( false ) }
+        />
+        <IonAlert 
+          isOpen={ tokenAlert }
+          message="Set DB Token"
+          inputs={[{ name: "token", value: dbToken }]}
+          buttons={[
+            { text: "Set", handler: (data: any) => { saveToken( data.token ); setTokenAlert( false ); } }, 
+            { text: "Cancel", handler: () => { setTokenAlert( false ) } }
+          ]}
+          onDidDismiss={ () => setTokenAlert( false ) }
+        />
+        <IonAlert 
+          isOpen={!!errorConnection} 
+          message={errorConnection} 
+          buttons={[{ text: "Okey", handler: clearErrorConnection }]} 
+        />
+        <IonLoading 
+          isOpen={loading} 
+          message={'Please Wait...'} 
+          backdropDismiss={ true }
+          onDidDismiss={ () => {
+            setLoading( false );
+            connectController.current!.abort();
+          }}
+        />
+      </IonGrid>
+    </IonContent>
   );
 };
 export default ConnectionSetting;
