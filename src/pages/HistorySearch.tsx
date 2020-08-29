@@ -55,7 +55,7 @@ const HistorySearch: React.FC = () => {
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
 
-    let url = AppSettings.DB_LOCATION + "/search?page=" + 1;
+    let url = 'http://' + AppSettings.DB_LOCATION + "/search?page=" + 1;
     if( imei ) url += "&imei=" + imei.toString();
     if(!( dtFrom === dtEnd )) url += "&start=" + new Date(dtFrom!).toJSON() + "&end=" + new Date(dtEnd!).toJSON();
 
@@ -82,7 +82,7 @@ const HistorySearch: React.FC = () => {
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
 
-    let url = AppSettings.DB_LOCATION + "/search?page=" + page;
+    let url = 'http://' + AppSettings.DB_LOCATION + "/search?page=" + page;
     if( imei ) url += "&imei=" + refIMEI!.toString();
     if(!( dtFrom === dtEnd )) url += "&start=" + new Date(refDTFrom!).toJSON() + "&end=" + new Date(refDTEnd!).toJSON();
 

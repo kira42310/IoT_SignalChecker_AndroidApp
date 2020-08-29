@@ -45,7 +45,7 @@ const MapInterface: React.FC<{
     const signal = controller.signal;
     setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
 
-    await fetch( AppSettings.DB_LOCATION + "/areafind?latNE=" + latNE + "&lngNE=" + lngNE + "&latSW=" + latSW + "&lngSW=" + lngSW, { signal })
+    await fetch( 'http://' + AppSettings.DB_LOCATION + "/areafind?latNE=" + latNE + "&lngNE=" + lngNE + "&latSW=" + latSW + "&lngSW=" + lngSW, { signal })
       .then( response => response.json() )
       .then( data => { setMarkers( data ); });
   };

@@ -22,20 +22,20 @@ import {
   useIonViewWillLeave,
 } from "@ionic/react";
 import { settings, ellipse, } from "ionicons/icons";
-import { Plugins, PermissionType, Geolocation, } from "@capacitor/core";
+import { Plugins } from "@capacitor/core";
 import ConnectionSetting from "../components/ConnectionSetting";
 import PingSection from "../components/PingSection";
 import StaticCheck from "../components/StaticCheck";
 import MovingCheck from "../components/MovingCheck";
 import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
-import { signalDataInterface } from "../AppFunction";
 
 const { Storage, Network, } = Plugins;
 
 const SignalChecker: React.FC = () => {
 
-  const [ isConnect, setIsConnect ] = useState<boolean>(false);
+  const [ isConnect, setIsConnect ] = useState<boolean>( false );
+  // const [ isConnect, setIsConnect ] = useState<boolean>( true );
   const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
@@ -49,9 +49,9 @@ const SignalChecker: React.FC = () => {
   const [ pingWindow, setPingWindow ] = useState<boolean>(false);
   const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
   const [ movingWindow, setMovingWindow ] = useState<boolean>(false);
-  const [ staticWindowClose, setStaticWindowClose ] = useState<boolean>( false );
   const [ movingWindowClose, setMovingWindowClose ] = useState<boolean>( false );
   const [ manualWindow, setManualWindow ] = useState<boolean>( false );
+  const [ disableBtn, setDisableBtn ] = useState<boolean>( false );
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ info, setInfo ] = useState<string>('');
   const timerId = useRef<any>();
@@ -66,10 +66,10 @@ const SignalChecker: React.FC = () => {
     clearInterval( timerId.current );
   });
 
-  const getURL = () => {
+  const getURL = async () => {
     let url: string;
-    const ip = sessionStorage.getItem( "rpiIP" );
-    const port = sessionStorage.getItem( "rpiPort" );
+    const ip = await (await Storage.get({ key: "rpiIP" })).value;
+    const port = await (await Storage.get({ key: "rpiPort" })).value;
     if( ip && port ) { url = ip + ":" + port; }
     else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
     setRPiDestination( url );
@@ -85,15 +85,17 @@ const SignalChecker: React.FC = () => {
   const checkConnect = async () => {
     const url = await getURL();
 
-    aController.current = new AbortController();
-    const signal = aController.current.signal;
-    setTimeout( () => aController.current!.abort(), 10000 );
+    const controller = new AbortController();
+    aController.current = controller;
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), 10000 );
     const result = await fetch( "http://" + url + "/status", { signal } )
       .then(( response ) => response.json() )
       .then(( data ) => { return data; })
       .catch(( error ) => { console.log( error ); });
     if( result === "P" ){
       setIsConnect( true );
+      setDisableBtn( true );
       setColorStatus( 'success' );
       const data = await fetch( "http://" + url + "/info" )
         .then(( response ) => response.json() )
@@ -107,13 +109,15 @@ const SignalChecker: React.FC = () => {
       setAPN( data[5] );
     }
     else if( result === "F" ){
-      clearInterval( timerId.current );
+      // clearInterval( timerId.current );
       setIsConnect( false );
+      setDisableBtn( true );
       setColorStatus( 'warning' );
     }
     else if( result === undefined ){
       clearInterval( timerId.current );
       setIsConnect( false );
+      setDisableBtn( false );
       setColorStatus( 'danger' );
     }
   };
@@ -123,25 +127,23 @@ const SignalChecker: React.FC = () => {
     clearInterval( timerId.current );
     aController.current!.abort();
     const url = await getURL();
-    let m,b;
-    if( sessionStorage.getItem( 'mode' ) && sessionStorage.getItem( 'band' )){
-      m = sessionStorage.getItem( "mode" );
-      b = sessionStorage.getItem( "band" );
-    }
-    else {
+    let m = await (await Storage.get({ key: 'mode' })).value;
+    let b = await (await Storage.get({ key: 'band' })).value;
+    if( !m && !b ){
       m = AppSettings.MODE;
       b = AppSettings.BAND;
     }
 
-    aController.current = new AbortController();
-    const signal = aController.current.signal;
-    setTimeout(() => { aController.current!.abort() }, AppSettings.CONNECT_TIMEOUT );
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => { controller.abort() }, AppSettings.CONNECT_TIMEOUT );
     const res = await fetch( "http://" + url + "/connectBase?mode=" + m + "&band=" + b, { signal } )
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
     if( res && res !== "F" ){
       setIsConnect( true );
+      setDisableBtn( true );
       setColorStatus( 'success' );
       setIMEI( res[0] );
       setIMSI( res[1] );
@@ -162,69 +164,72 @@ const SignalChecker: React.FC = () => {
     }
     else if( res === "F" ){
       setIsConnect( false );
+      setDisableBtn( true );
       setColorStatus( 'warning' );
     }
     else{
       setIsConnect( false );
+      setDisableBtn( false );
       setColorStatus( 'danger' );
     }
     setLoading( false );
   };
 
-  const insertDB = async ( lat: number, lng: number, d: signalDataInterface) => {
-    if( !(await Storage.get({ key: 'DBToken'} ))){
-      setError( 'No database token' );
-      return ;
-    }
-    const body = Object.assign({
-      token: await (await Storage.get({ key: 'DBToken' })).value,
-      imei: imei,
-      imsi: imsi,
-      mode: mode,
-      band: band,
-      latitude: lat,
-      longitude: lng,
-    },d);
-    const dbOption = {
-      method: "POST",
-      headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    };
+  // const insertDB = async ( lat: number, lng: number, d: signalDataInterface) => {
+  //   if( !(await Storage.get({ key: 'DBToken'} ))){
+  //     setError( 'No database token' );
+  //     return ;
+  //   }
+  //   const body = Object.assign({
+  //     token: await (await Storage.get({ key: 'DBToken' })).value,
+  //     imei: imei,
+  //     imsi: imsi,
+  //     mode: mode,
+  //     band: band,
+  //     latitude: lat,
+  //     longitude: lng,
+  //   },d);
+  //   const dbOption = {
+  //     method: "POST",
+  //     headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
+  //     body: JSON.stringify(body)
+  //   };
     
-    const res = await fetch(AppSettings.DB_LOCATION + "/insertdb", dbOption)
-      .then((response) => response.json())
-      .then((result) => { return result })
-      .catch(error => console.log(error));
-    // let url = await getURL();
-    // url = 'http://' + url + '/mqtt&url=' + AppSettings.DB_LOCATION + '&data=' + data;
-    // const res = await fetch( url );
-    if( res ) setError('Insert database success');
-    else setError('Failed to insert database');
-  };
+  //   const res = await fetch(AppSettings.DB_LOCATION + "/insertdb", dbOption)
+  //     .then((response) => response.json())
+  //     .then((result) => { return result })
+  //     .catch(error => console.log(error));
+  //   // let url = await getURL();
+  //   // url = 'http://' + url + '/mqtt&url=' + AppSettings.DB_LOCATION + '&data=' + data;
+  //   // const res = await fetch( url );
+  //   if( res ) setError('Insert database success');
+  //   else setError('Failed to insert database');
+  // };
 
-  const changeIsConnect = async ( imei: string, imsi: string, mode: string, band: string, ip: string, apn: string, destination: string ) => {
-    setIsConnect(true);
-    setColorStatus( 'success' );
-    setIMEI(imei);
-    setIMSI(imsi);
-    setMode(mode);
-    setBand(band);
-    setIP(ip);
-    setAPN( apn );
-    setRPiDestination(destination);
-    const token = await Storage.get({ key: 'DBToken' });
-    if( token ) {
-      setInfo( 
-        token.value + '_' +
-        imei + '_' + 
-        imsi + '_' +
-        mode + '_' +
-        band + '_'
-      );
-    }
-    setConnectionWindow(false);
-    setIntervalCheckConnect();
-  };
+  // const changeIsConnect = async ( imei: string, imsi: string, mode: string, band: string, ip: string, apn: string, destination: string ) => {
+  //   setIsConnect( true );
+  //   setDisableBtn( true );
+  //   setColorStatus( 'success' );
+  //   setIMEI(imei);
+  //   setIMSI(imsi);
+  //   setMode(mode);
+  //   setBand(band);
+  //   setIP(ip);
+  //   setAPN( apn );
+  //   setRPiDestination(destination);
+  //   const token = await Storage.get({ key: 'DBToken' });
+  //   if( token ) {
+  //     setInfo( 
+  //       token.value + '_' +
+  //       imei + '_' + 
+  //       imsi + '_' +
+  //       mode + '_' +
+  //       band + '_'
+  //     );
+  //   }
+  //   setConnectionWindow(false);
+  //   setIntervalCheckConnect();
+  // };
 
   const clearError = () => {
     setError("");
@@ -237,17 +242,17 @@ const SignalChecker: React.FC = () => {
     setMovingWindow( false );
     if( res === "F" ){
       setIsConnect( false );
+      setDisableBtn( true );
       setColorStatus( 'warning' );
       setLoading( false );
       setError( "Cannot Connect to Serving Cell" );
-      return;
     }
     else if( res === "D" ){
       setIsConnect( false );
+      setDisableBtn( false );
       setColorStatus( 'danger' );
       setLoading( false );
       setError( "Cannot Connect to RPi Device" );
-      return;
     }
   };
 
@@ -256,17 +261,11 @@ const SignalChecker: React.FC = () => {
     if( tname === "moving" ){
       setMovingWindowClose( true );
     }
-    else if( tname === "static" ){
-      setStaticWindowClose( true );
-    }
   };
 
   const offAutoTest = ( tname: string ) => {
     if( tname === "moving" ){
       setMovingWindowClose( false );
-    }
-    else if( tname === "static" ){
-      setStaticWindowClose( false );
     }
     setIntervalCheckConnect();
   };
@@ -278,9 +277,10 @@ const SignalChecker: React.FC = () => {
   }
 
   const disableModule = async () => {
-    aController.current = new AbortController();
-    const signal = aController.current.signal;
-    setTimeout( () => aController.current!.abort(), AppSettings.CONNECT_TIMEOUT );
+    aController.current!.abort();
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
     setLoading( true );
     const res = await fetch( 'http://'+rpiDestination+'/disable', { signal })
       .then( response => response.json() )
@@ -349,38 +349,37 @@ const SignalChecker: React.FC = () => {
           </IonCard>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => reconnect() } disabled={ isConnect }  expand="full">Reconnect</IonButton>
-              {/* <IonButton onClick={ () => setPingWindow(true) }  expand="full">Ping</IonButton> */}
+              <IonButton onClick={ () => reconnect() } disabled={ isConnect }  expand="full">Connect Cell</IonButton>
+            </IonCol>
+          </IonRow>
+          <IonRow>
+            <IonCol>
+              <IonButton onClick={ () => setIntervalCheckConnect() } disabled={ isConnect }  expand="full">Reconnect RPi</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => setPingWindow(true) } disabled={ !isConnect }  expand="full">Ping</IonButton>
-              {/* <IonButton onClick={ () => setPingWindow(true) }  expand="full">Ping</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => setStaticWindow( true ) } disabled={ !isConnect } expand="full">Auto Static Test</IonButton>
-              {/* <IonButton onClick={ () => setStaticWindow( true ) } expand="full">Static Test</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton>
-              {/* <IonButton onClick={ () => setMovingWindow( true ) } expand="full">Moving Test</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => setManualWindow( true ) } disabled={ !isConnect } expand="full">Manual Test</IonButton>
-              {/* <IonButton onClick={ () => setManualWindow( true ) } expand="full">Manual Test</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => disableModule() } disabled={ !isConnect } expand="full" color="danger">Disable Module</IonButton>
-              {/* <IonButton onClick={ () => disableModule() } expand="full" color="danger">Disable Module</IonButton> */}
+              <IonButton onClick={ () => disableModule() } disabled={ !disableBtn } expand="full" color="danger">Disable Module</IonButton>
             </IonCol>
           </IonRow>
         </IonGrid>
@@ -395,7 +394,11 @@ const SignalChecker: React.FC = () => {
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <ConnectionSetting onChangeIsConnect={changeIsConnect}/>
+        <ConnectionSetting 
+          checkConnect={ setIntervalCheckConnect }
+          mode={ mode }
+          band={ band }
+        />
       </IonModal>
 
       <IonModal isOpen={pingWindow}>
@@ -415,7 +418,7 @@ const SignalChecker: React.FC = () => {
           <IonToolbar>
             <IonTitle>Static Test</IonTitle>
             <IonButtons slot="end">
-              <IonButton disabled={ staticWindowClose }onClick={ () => setStaticWindow(false) }>Close</IonButton>
+              <IonButton onClick={ () => setStaticWindow(false) }>Close</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -423,8 +426,8 @@ const SignalChecker: React.FC = () => {
           Disconnect={ Disconnect }
           onAutoTest={ onAutoTest }
           offAutoTest={ offAutoTest }
-          insertDB={ insertDB }
           url={ rpiDestination! } 
+          info={ info }
         />
       </IonModal>
 
@@ -466,11 +469,7 @@ const SignalChecker: React.FC = () => {
       <IonLoading 
         isOpen={ loading } 
         message={ "Please Wait..." } 
-        backdropDismiss={ true } 
-        onDidDismiss={ () => {
-          setLoading( false );
-          aController.current?.abort();
-        }}
+        backdropDismiss={ false } 
       />
     </IonPage>
   );

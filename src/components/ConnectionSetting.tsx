@@ -19,7 +19,9 @@ import { Plugins } from "@capacitor/core";
 const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
-  onChangeIsConnect: (imei: string, imsi: string,  mode: string, band: string, ip: string, apn: string, rpiDestination: string) => void;
+  checkConnect: () => void,
+  mode: string | undefined,
+  band: string | undefined,
 }> = (props) => {
   const [ rpiIP, setRPiIP ] = useState<string>( AppSettings.RPI_IP );
   const [ rpiPort, setRPiPort ] = useState<number>( AppSettings.RPI_PORT );
@@ -34,20 +36,38 @@ const ConnectionSetting: React.FC<{
   const connectController = useRef<AbortController>();
 
   useEffect( () => {
-    loadSetting();
-  },[]);
+    const loadSetting = async () => {
+      if( await (await Storage.get({ key: 'mode'})).value ) {
+        setMode( await (await Storage.get({ key: 'mode' })).value! );
+        setBand( await (await Storage.get({ key: 'band' })).value! );
+        setRPiIP( await (await Storage.get({ key: 'rpiIP' })).value! );
+        setRPiPort( +await (await Storage.get({ key: 'rpiPort' })).value! );
+      }
+      if( !props.mode && !props.band ){
 
-  const loadSetting = async () => {
-    if( sessionStorage.getItem( 'mode' )){
-      setMode( sessionStorage.getItem( 'mode' )! );
-      setBand( sessionStorage.getItem( 'band' )! );
-      setRPiIP( sessionStorage.getItem( 'rpiIP' )! );
-      setRPiPort( +sessionStorage.getItem( 'rpiPort' )! );
-    }
-    if( await Storage.get({ key: 'DBToken' }) ){
-      setDBToken( await (await Storage.get({ key: 'DBToken' })).value! );
-    }
-  };
+      }
+      if( await Storage.get({ key: 'DBToken' }) ){
+        setDBToken( await (await Storage.get({ key: 'DBToken' })).value! );
+      }
+    };
+    loadSetting();
+  },[ props ]);
+
+  // const loadSetting = async () => {
+  //   if( await (await Storage.get({ key: 'mode'})).value ) {
+  //     setMode( await (await Storage.get({ key: 'mode' })).value! );
+  //     setBand( await (await Storage.get({ key: 'band' })).value! );
+  //     setRPiIP( await (await Storage.get({ key: 'rpiIP' })).value! );
+  //     setRPiPort( +await (await Storage.get({ key: 'rpiPort' })).value! );
+  //   }
+  //   if( props.mode && props.band ){
+  //     setMode( props.mode );
+  //     setBand( props.band );
+  //   }
+  //   if( await Storage.get({ key: 'DBToken' }) ){
+  //     setDBToken( await (await Storage.get({ key: 'DBToken' })).value! );
+  //   }
+  // };
 
   const ipPortInput = () => {
     if (
@@ -79,23 +99,24 @@ const ConnectionSetting: React.FC<{
     setErrorConnection("");
   };
 
-  const rpiConnect = async () => {
-    if ( ipPortInput() ) return ;
-    const url = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
-    setLoading( true );
+  // const rpiConnect = async () => {
+  //   if ( ipPortInput() ) return ;
+  //   const url = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
+  //   setLoading( true );
 
-    connectController.current = new AbortController();
-    const signal = connectController.current.signal;
-    setTimeout(() => { connectController.current!.abort() }, AppSettings.CONNECT_TIMEOUT );
-    const res = await fetch(url, { signal })
-      .then( (response) => response.json() )
-      .then( (data) => { return data; })
-      .catch( e => console.log(e) );
-    if( res === "F" ) { setErrorConnection("Cannot connect to Cell!"); return ; }
-    else if( signal.aborted ) { setErrorConnection("Cannt connect to RPi"); return ; }
-    setLoading( false );
-    props.onChangeIsConnect( res[0], res[1], res[2], res[3], res[4], res[5], rpiIP + ":" + rpiPort );
-  };
+  //   connectController.current = new AbortController();
+  //   const signal = connectController.current.signal;
+  //   const id = setTimeout(() => { connectController.current!.abort() }, AppSettings.CONNECT_TIMEOUT );
+  //   const res = await fetch(url, { signal })
+  //     .then( (response) => response.json() )
+  //     .then( (data) => { return data; })
+  //     .catch( e => console.log(e) );
+  //   clearTimeout( id );
+  //   setLoading( false );
+  //   if( res === "F" ) { setErrorConnection("Cannot connect to Cell!"); return ; }
+  //   else if( signal.aborted ) { setErrorConnection("Cannt connect to RPi"); return ; }
+  //   props.onChangeIsConnect( res[0], res[1], res[2], res[3], res[4], res[5], rpiIP + ":" + rpiPort );
+  // };
 
   const resetModule = async () => {
     const url = ("http://" + rpiIP + ":" + rpiPort + "/repair")
@@ -148,12 +169,16 @@ const ConnectionSetting: React.FC<{
     else setErrorConnection( "Connection to RPI Error" );
   };
 
-  const saveSetting = () => {
-    sessionStorage.setItem( 'mode', mode);
-    sessionStorage.setItem( 'band', band );
-    sessionStorage.setItem( 'rpiIP', rpiIP );
-    sessionStorage.setItem( 'rpiPort', rpiPort.toString() );
-    rpiConnect();
+  const saveSetting = async () => {
+    if( ipPortInput() ){ 
+      setErrorConnection( 'IP or Port is invalid' );
+      return;
+    }
+    await Storage.set({ key: 'mode', value: mode });
+    await Storage.set({ key: 'band', value: band });
+    await Storage.set({ key: 'rpiIP', value: rpiIP });
+    await Storage.set({ key: 'rpiPort', value: rpiPort.toString() });
+    props.checkConnect();
   };
 
   const saveToken = async ( token: string ) => {
@@ -212,17 +237,17 @@ const ConnectionSetting: React.FC<{
         </IonRow>
         <IonRow>
           <IonCol>
-            <IonButton onClick={ saveSetting } expand="full">Save & Connect</IonButton>
+            <IonButton onClick={ () => saveSetting() } expand="full">Save</IonButton>
           </IonCol>
         </IonRow>
         <IonRow>
           <IonCol>
-            <IonButton onClick={ defaultValue } expand="full">Default Value</IonButton>
+            <IonButton onClick={ () => defaultValue() } expand="full">Default Value</IonButton>
           </IonCol>
         </IonRow>
         <IonRow>
           <IonCol>
-            <IonButton onClick={ resetModule } expand="full">Reset Module</IonButton>
+            <IonButton onClick={ () => resetModule() } expand="full">Reset Module</IonButton>
           </IonCol>
         </IonRow>
         <IonRow>

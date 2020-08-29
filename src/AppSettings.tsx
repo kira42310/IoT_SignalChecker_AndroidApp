@@ -10,11 +10,10 @@ export class AppSettings {
   public static TRACKING_DELAY: number = 30;
   public static DEFAULT_PING_SITE: string = "www.google.com";
   public static DEFAULT_PING_RETRY: number = 5;
-  public static CONNECTION_INTERVAL: number = 60000;
+  public static CONNECTION_INTERVAL: number = 11000;
   public static CONNECT_TIMEOUT: number = 90000;
-  public static CHECK_INTERVAL_HOUR: string = "00";
-  public static CHECK_INTERVAL_MIN: string = "15";
-  public static CHECK_INTERVAL_SEC: string = "00";
+  public static CHECK_INTERVAL_MIN: number = 15;
+  public static CHECK_INTERVAL_SEC: number = 0;
 
   public static getColorRssiRsrp( data: number ): string  {
     if( data >= -80  && data < 0) return "blue"

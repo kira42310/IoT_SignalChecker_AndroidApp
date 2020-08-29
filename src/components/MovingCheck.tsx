@@ -4,13 +4,13 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonItem,
   IonButton,
   IonAlert,
   IonLoading,
-  IonInput,
   IonIcon,
+  IonPicker,
 } from "@ionic/react";
+import { PickerColumn } from "@ionic/core";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
 import { trash } from "ionicons/icons";
@@ -27,14 +27,15 @@ const MovingCheck: React.FC<{
   url: string,
 }> = (props) => {
 
-  const [ intervalHour, setIntervalHour ] = useState<string>( AppSettings.CHECK_INTERVAL_HOUR );
-  const [ intervalMin, setIntervalMin ] = useState<string>( AppSettings.CHECK_INTERVAL_MIN );
-  const [ intervalSec, setIntervalSec ] = useState<string>( AppSettings.CHECK_INTERVAL_SEC );
+  const [ intervalMin, setIntervalMin ] = useState<number>( AppSettings.CHECK_INTERVAL_MIN );
+  const [ intervalSec, setIntervalSec ] = useState<number>( AppSettings.CHECK_INTERVAL_SEC );
   const [ mapCenter, setMapCenter ] = useState<google.maps.LatLng>( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [ errorConnection, setErrorConnection ] = useState<string>();
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ startStopBtn, setStartStopBtn ] = useState<boolean>(true);
   const [ startTestAlert, setStartTestAlert ] = useState<boolean>(false);
+  const [ secPicker, setSecPicker ] = useState<boolean>( false );
+  const [ minPicker, setMinPicker ] = useState<boolean>( false );
   const [ update, setUpdate ] = useState(0);
   const markers = useRef<markerInterface[]>([]);
   const trackerInterval = useRef<any>( 0 );
@@ -104,7 +105,8 @@ const MovingCheck: React.FC<{
     setStartTestAlert( false );
     props.onAutoTest( "moving" );
     setStartStopBtn( false );
-    const itv: number = ( +( intervalHour ) * 3600000 ) + ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
+    // interval in typescript is in millisec not sec
+    const itv: number = ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
     signalStrength( insertDB )
     const id = setInterval( () => signalStrength( insertDB ) , itv );
     trackerInterval.current = id;
@@ -159,6 +161,29 @@ const MovingCheck: React.FC<{
     };
   }
 
+  const secColumn: PickerColumn = {
+    name: "sec",
+    options: [
+      { text: '0 sec', value: 0 },
+      { text: '15 sec', value: 15 },
+      { text: '30 sec', value: 30 },
+      { text: '45 sec', value: 45 },
+    ],
+  };
+
+  const minColumn: PickerColumn = {
+    name: "min",
+    options: [
+      { text: '1 min', value: 1 },
+      { text: '5 min', value: 5 },
+      { text: '10 min', value: 10 },
+      { text: '15 min', value: 15 },
+      { text: '30 min', value: 30 },
+      { text: '45 min', value: 45 },
+      { text: '60 min', value: 60 },
+    ]
+  };
+
   return (
     <IonGrid fixed={ true }>
       <IonRow>
@@ -176,42 +201,38 @@ const MovingCheck: React.FC<{
       </IonRow>
       <IonRow>
         <IonCol>
-          <IonLabel>Hour(s)</IonLabel>
-          <IonItem>
-            <IonInput disabled={ !startStopBtn } 
-              value={ intervalHour } 
-              debounce={ 500 } 
-              type="tel"
-              minlength={ 0 }
-              maxlength={ 2 }
-              onIonChange={ e => setIntervalHour( e.detail.value! )} 
-            />
-          </IonItem>
+          <IonLabel>Minutes</IonLabel>
+          <IonButton onClick={ () => setMinPicker( true )} expand="full" disabled={ !startStopBtn }>{ intervalMin } min.</IonButton>
+          <IonPicker 
+            isOpen={ minPicker } 
+            columns={[ minColumn ]} 
+            buttons={[
+              {
+                text: 'Confirm',
+                handler: e => {
+                  setIntervalMin( e.min.value );
+                  setMinPicker( false );
+                }
+              }
+            ]}
+          />
         </IonCol>
         <IonCol>
-          <IonLabel>Minute(s)</IonLabel>
-          <IonItem>
-            <IonInput disabled={ !startStopBtn } 
-              value={ intervalMin } 
-              debounce={ 500 } 
-              type="tel"
-              minlength={ 0 }
-              maxlength={ 2 }
-              onIonChange={ e => setIntervalMin( e.detail.value! )} 
-            />
-          </IonItem>
-        </IonCol>
-        <IonCol>
-          <IonLabel>Second(s)</IonLabel>
-          <IonItem>
-            <IonInput disabled={ !startStopBtn } 
-              value={ intervalSec } 
-              type="tel"
-              minlength={ 0 }
-              maxlength={ 2 }
-              onIonChange={ e => setIntervalSec( e.detail.value! )}
-            />
-          </IonItem>
+          <IonLabel>Seconds</IonLabel>
+          <IonButton onClick={ () => setSecPicker( true )} expand="full" disabled={ !startStopBtn }>{ intervalSec } Sec.</IonButton>
+          <IonPicker 
+            isOpen={ secPicker } 
+            columns={[ secColumn ]} 
+            buttons={[
+              {
+                text: 'Confirm',
+                handler: e => {
+                  setIntervalSec( e.sec.value );
+                  setSecPicker( false );
+                }
+              }
+            ]}
+          />
         </IonCol>
       </IonRow>
       <GoogleMap mapContainerStyle={ containerStyle } 
