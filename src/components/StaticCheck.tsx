@@ -44,7 +44,7 @@ const StaticCheck: React.FC<{
 
   useEffect( () => {
     const checkRPiState = async () => {
-      let url = 'http://' + props.url + '/staticstatus';
+      let url = 'http://' + props.url + '/staticStatus';
 
       const controller = new AbortController();
       const signal = controller.signal;
@@ -80,6 +80,11 @@ const StaticCheck: React.FC<{
 
     // interval in python is sec not millisec.
     const itv: number = ( intervalMin * 60 ) + intervalSec;
+    if( itv === 0 ){
+      setLoading( false );
+      setErrorConnection( 'Interval is 0 second, failed to start' );
+      return ;
+    }
 
     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
 
@@ -90,7 +95,7 @@ const StaticCheck: React.FC<{
     else if( props.info === '' ){
       setErrorConnection( 'No database token, insert database failed');
     }
-    else data = props.info + '_' + location.coords.latitude + '_' + location.coords.longitude + '_';
+    else data = props.info + ',' + location.coords.latitude + ',' + location.coords.longitude;
 
     let url = 'http://' + props.url + '/starttest?interval=' + itv.toString() + '&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
 
@@ -117,11 +122,11 @@ const StaticCheck: React.FC<{
     const res = await fetch( url, { signal })
       .then( response => response.json() )
       .then( d => { return d; });
+    setStartStopBtn( true );
     if( signal.aborted ){
       setErrorConnection( 'Cannot connect to RPi' );
       return ;
     }
-    setStartStopBtn( true );
 
     const d = {
       'scRSSI': +res[0],
@@ -131,6 +136,7 @@ const StaticCheck: React.FC<{
       'scPCID': res[4],
     };
     setSignalData( d );
+    setSignalColor( convertSignalToColor( d ));
     sessionStorage.setItem( 'staticTestData', JSON.stringify( d ) );
   };
 
@@ -148,31 +154,38 @@ const StaticCheck: React.FC<{
     setErrorConnection("");
   };
 
-  const clearMeasure = () => {
+  const clearMeasure = async () => {
     setSignalData( null );
     sessionStorage.removeItem( 'staticTestData' );
+
+    let url = 'http://' + props.url + '/clearavgdata';
+    const controller = new AbortController();
+    const signal = controller.signal;
+    setTimeout(() => controller.abort(), AppSettings.CONNECT_TIMEOUT);
+    await fetch( url, { signal }).then( response => response.json() ).then( d => { return d; });
   };
 
   const secColumn: PickerColumn = {
     name: "sec",
     options: [
       { text: '0 sec', value: 0 },
-      { text: '15 sec', value: 15 },
-      { text: '30 sec', value: 30 },
-      { text: '45 sec', value: 45 },
+      { text: '15 secs', value: 15 },
+      { text: '30 secs', value: 30 },
+      { text: '45 secs', value: 45 },
     ],
   };
 
   const minColumn: PickerColumn = {
     name: "min",
     options: [
+      { text: '0 min', value: 0 },
       { text: '1 min', value: 1 },
-      { text: '5 min', value: 5 },
-      { text: '10 min', value: 10 },
-      { text: '15 min', value: 15 },
-      { text: '30 min', value: 30 },
-      { text: '45 min', value: 45 },
-      { text: '60 min', value: 60 },
+      { text: '5 mins', value: 5 },
+      { text: '10 mins', value: 10 },
+      { text: '15 mins', value: 15 },
+      { text: '30 mins', value: 30 },
+      { text: '45 mins', value: 45 },
+      { text: '60 mins', value: 60 },
     ]
   };
 

@@ -29,6 +29,7 @@ import StaticCheck from "../components/StaticCheck";
 import MovingCheck from "../components/MovingCheck";
 import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
+import { disconnect } from "process";
 
 const { Storage, Network, } = Plugins;
 
@@ -177,10 +178,10 @@ const SignalChecker: React.FC = () => {
   const prepareInfo = ( token: string, imei0: string = imei, imsi0: string = imsi, mode0: string = mode, band0: string = band ) => {
     if( imei0 !== '-' && imsi0 !== '-' && mode0 !== '-' && band0 !== '-' ){
       setInfo( 
-        token + '_' +
-        imei0 + '_' + 
-        imsi0 + '_' +
-        mode0 + '_' +
+        token + ',' +
+        imei0 + ',' + 
+        imsi0 + ',' +
+        mode0 + ',' +
         band0
       );
     }
@@ -396,7 +397,7 @@ const SignalChecker: React.FC = () => {
         </IonGrid>
       </IonContent>
 
-      <IonModal isOpen={connectionWindow}>
+      <IonModal isOpen={ connectionWindow }>
         <IonHeader translucent>
           <IonToolbar>
             <IonTitle>Sigal and RPi Settings</IonTitle>
@@ -422,7 +423,9 @@ const SignalChecker: React.FC = () => {
             </IonButtons>
           </IonToolbar>
         </IonHeader>
-        <PingSection destination={rpiDestination!} />
+        <PingSection 
+          Disconnect={ disconnect }
+          url={ rpiDestination! } />
       </IonModal>
 
       <IonModal isOpen={ staticWindow }>

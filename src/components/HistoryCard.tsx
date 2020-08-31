@@ -22,7 +22,7 @@ const HistoryCard: React.FC<{ data: retriveDataFromDBInterface }> = (props) => {
         <IonGrid>
           <IonRow>
             <IonCol size="4">
-              <MapCustomView latitude={ props.data.latitude } longtitude={ props.data.longitude } />
+              <MapCustomView latitude={ +props.data.latitude.$numberDecimal } longtitude={ +props.data.longitude.$numberDecimal } />
             </IonCol>
             <IonCol>
               <p>Date</p>

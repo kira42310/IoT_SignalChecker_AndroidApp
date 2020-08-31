@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   IonLabel,
   IonGrid,
@@ -16,7 +16,8 @@ import {
 import { AppSettings } from "../AppSettings"
 
 const PingSection: React.FC<{
-  destination: string,
+  Disconnect: ( res: string ) => void,
+  url: string,
 }> = (props) => {
   const [ site, setSite ] = useState<string>(AppSettings.DEFAULT_PING_SITE);
   const [ retry, setRetry ] = useState<number>(AppSettings.DEFAULT_PING_RETRY);
@@ -24,23 +25,49 @@ const PingSection: React.FC<{
   const [ showData, setShowData ] = useState<boolean>(false);
   const [ errorConnection, setErrorConnection ] = useState<string>();
   const [ loading, setLoading ] = useState<boolean>(false);
+  const [ enableBtn, setEnableBtn ] = useState<boolean>( true );
+
+  useEffect( () => {
+    const checkRPiState = async () => {
+      let url = 'http://' + props.url + '/staticStatus';
+
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+      const res = await fetch( url, { signal })
+        .then( response => response.json() )
+        .then( d => { return d; });
+      if( res === 'P' ){
+        setErrorConnection( 'Static test is still in use' );
+        setEnableBtn( false );
+      }
+      if( res === 'F' ){
+        setEnableBtn( true );
+      }
+      else if( signal.aborted ){
+        props.Disconnect( 'D' );
+        setErrorConnection( 'Cannot connect to RPi' );
+      }
+    };
+    checkRPiState();
+  }, [ props ]);
 
   const clearErrorConnection = () => {
     setErrorConnection("");
   };
 
   const pingSite = async () => {
-    const url = ("http://" + props.destination + "/ping?site=" + site )
+    const url = ("http://" + props.url + "/ping?site=" + site )
     var result:any;
     setLoading(true);
-    await fetch( 'http://' + props.destination + '/pingactivate' );
+    await fetch( 'http://' + props.url + '/pingactivate' );
     for( var i = 0; i <= retry; i++){
       result = await fetch( url )
         .then( (response) => response.json() )
         .then( (data) => { return data; })
       if( result ){ break; }
     };
-    await fetch( 'http://' + props.destination + '/pingdeactivate');
+    await fetch( 'http://' + props.url + '/pingdeactivate');
     setLoading(false);
     if( result[0] === "F" ) { setErrorConnection("Cannot Ping!"); return ;}
     setData({ send: result[0], recv: result[1], avg: result[2] });
@@ -66,7 +93,7 @@ const PingSection: React.FC<{
         </IonRow>
         <IonRow>
           <IonCol className="ion-margin-top">
-            <IonButton onClick={pingSite} expand="full" size="large">Ping</IonButton>
+            <IonButton onClick={pingSite} expand="full" size="large" disabled={ !enableBtn }>Ping</IonButton>
           </IonCol>
         </IonRow>
         { showData &&

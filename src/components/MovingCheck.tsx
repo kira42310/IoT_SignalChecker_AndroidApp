@@ -48,6 +48,31 @@ const MovingCheck: React.FC<{
     return ( () => clearInterval( trackerInterval.current ) );
   },[]);
 
+  useEffect( () => {
+    const checkRPiState = async () => {
+      let url = 'http://' + props.url + '/staticStatus';
+
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+      const res = await fetch( url, { signal })
+        .then( response => response.json() )
+        .then( d => { return d; });
+      if( res === 'P' ){
+        setErrorConnection( 'Static test is still in use' );
+        setStartStopBtn( false );
+      }
+      if( res === 'F' ){
+        setStartStopBtn( true );
+      }
+      else if( signal.aborted ){
+        props.Disconnect( 'D' );
+        setErrorConnection( 'Cannot connect to RPi' );
+      }
+    };
+    checkRPiState();
+  }, [ props ]);
+
   const getLocation = async () => {
     const tmp = await Geolocation.getCurrentPosition().catch( e => { return e; });
     if( !tmp.code ) setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
@@ -67,7 +92,7 @@ const MovingCheck: React.FC<{
       setErrorConnection( 'No database token, insert database failed');
       insertDB = false;
     }
-    else data = props.info + '_' + location.coords.latitude + '_' + location.coords.longitude + '_';
+    else data = props.info + ',' + location.coords.latitude + ',' + location.coords.longitude;
 
     let url = 'http://' + props.url + '/signalStrength?insert=';
     if( insertDB ) url = url + 'y&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
@@ -107,6 +132,14 @@ const MovingCheck: React.FC<{
     setStartStopBtn( false );
     // interval in typescript is in millisec not sec
     const itv: number = ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
+    if( itv === 0 ){
+      setLoading( false );
+      setErrorConnection( 'Interval is 0 second, failed to start' );
+      props.offAutoTest( 'moving' );
+      setStartStopBtn( true );
+      return ;
+    }
+    
     signalStrength( insertDB )
     const id = setInterval( () => signalStrength( insertDB ) , itv );
     trackerInterval.current = id;
@@ -165,22 +198,23 @@ const MovingCheck: React.FC<{
     name: "sec",
     options: [
       { text: '0 sec', value: 0 },
-      { text: '15 sec', value: 15 },
-      { text: '30 sec', value: 30 },
-      { text: '45 sec', value: 45 },
+      { text: '15 secs', value: 15 },
+      { text: '30 secs', value: 30 },
+      { text: '45 secs', value: 45 },
     ],
   };
 
   const minColumn: PickerColumn = {
     name: "min",
     options: [
+      { text: '0 min', value: 0 },
       { text: '1 min', value: 1 },
-      { text: '5 min', value: 5 },
-      { text: '10 min', value: 10 },
-      { text: '15 min', value: 15 },
-      { text: '30 min', value: 30 },
-      { text: '45 min', value: 45 },
-      { text: '60 min', value: 60 },
+      { text: '5 mins', value: 5 },
+      { text: '10 mins', value: 10 },
+      { text: '15 mins', value: 15 },
+      { text: '30 mins', value: 30 },
+      { text: '45 mins', value: 45 },
+      { text: '60 mins', value: 60 },
     ]
   };
 

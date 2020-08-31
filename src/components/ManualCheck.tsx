@@ -24,11 +24,12 @@ const ManualCheck: React.FC<{
   url: string,
   info: string,
 }> = (props) => {
-  const [ data, setData ] = useState<signalDataInterface | null>(null);
+  const [ data, setData ] = useState<signalDataInterface | null>( null );
   const [ signalColor, setSignalColor ] = useState<signalColorInterface>();
   const [ startTestAlert, setStartTestAlert ] = useState<boolean>( false );
   const [ errorConnection, setErrorConnection ] = useState<string>();
-  const [ loading, setLoading ] = useState<boolean>(false);
+  const [ loading, setLoading ] = useState<boolean>( false );
+  const [ enableBtn, setEnableBtn ] = useState<boolean>( true );
 
   useEffect( () => {
     if( sessionStorage.getItem( 'manualTestData' )){
@@ -37,6 +38,31 @@ const ManualCheck: React.FC<{
       setData( tmp );
     }
   }, []);
+
+  useEffect( () => {
+    const checkRPiState = async () => {
+      let url = 'http://' + props.url + '/staticStatus';
+
+      const controller = new AbortController();
+      const signal = controller.signal;
+      setTimeout( () => controller.abort(), AppSettings.CONNECT_TIMEOUT );
+      const res = await fetch( url, { signal })
+        .then( response => response.json() )
+        .then( d => { return d; });
+      if( res === 'P' ){
+        setErrorConnection( 'Static test is still in use' );
+        setEnableBtn( false );
+      }
+      if( res === 'F' ){
+        setEnableBtn( true );
+      }
+      else if( signal.aborted ){
+        props.Disconnect( 'D' );
+        setErrorConnection( 'Cannot connect to RPi' );
+      }
+    };
+    checkRPiState();
+  }, [ props ]);
 
   const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
@@ -51,7 +77,7 @@ const ManualCheck: React.FC<{
       setErrorConnection( 'No database token, insert database failed');
       insertDB = false;
     }
-    else data = props.info + '_' + location.coords.latitude.toString() + '_' + location.coords.longitude.toString() + '_';
+    else data = props.info + ',' + location.coords.latitude.toString() + ',' + location.coords.longitude.toString();
 
     let url = 'http://' + props.url + '/signalStrength?insert=';
     if( insertDB ) url = url + 'y&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
@@ -125,7 +151,7 @@ const ManualCheck: React.FC<{
       <IonGrid fixed={ true }>
         <IonRow>
           <IonCol>
-            <IonButton onClick={ () => setStartTestAlert( true ) } expand="full">Test</IonButton>
+            <IonButton onClick={ () => setStartTestAlert( true ) } disabled={ !enableBtn } expand="full">Test</IonButton>
           </IonCol>
         </IonRow>
         <IonRow>

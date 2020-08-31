@@ -3,7 +3,7 @@ import { IonLabel, useIonViewWillEnter, IonAlert, } from "@ionic/react"
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { Plugins } from "@capacitor/core";
 import { AppSettings } from "../AppSettings";
-import { markerInterface } from "../AppFunction";
+import { markerInterfaceMongo } from "../AppFunction";
 
 const { Geolocation, } = Plugins;
 
@@ -16,7 +16,7 @@ const MapInterface: React.FC<{
   const [ isInfo, setIsInfo ] = useState< boolean >( false );
   const [ center, setCenter ] = useState< google.maps.LatLng >( new google.maps.LatLng( 13.7625293, 100.5655906 ) ); // Default @ True Building
   const [ mapOBJ, setMapOBJ ] = useState< google.maps.Map >();
-  const [ markers, setMarkers ] = useState< markerInterface[] >([]);
+  const [ markers, setMarkers ] = useState< markerInterfaceMongo[] >([]);
   const [ error, setError ] = useState<string>();
 
   useIonViewWillEnter( () => {
@@ -120,8 +120,8 @@ const MapInterface: React.FC<{
           {
             markers.map( data => (
               <Marker key={ data._id.$oid } 
-                position={{ lat: data.latitude, lng: data.longitude }} 
-                onClick={ e => infoWindowPanel( data.latitude, data.longitude, data[props.showValue] )} 
+                position={{ lat: +data.latitude.$numberDecimal, lng: +data.longitude.$numberDecimal }} 
+                onClick={ e => infoWindowPanel( +data.latitude.$numberDecimal, +data.longitude.$numberDecimal, data[props.showValue] )} 
                 options={{ icon: convertDataToIcon( data[props.showValue] ) }}
               />
             ))

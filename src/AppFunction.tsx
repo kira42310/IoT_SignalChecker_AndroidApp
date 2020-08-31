@@ -52,6 +52,16 @@ export interface markerInterface {
   scRSRQ: number,
 };
 
+export interface markerInterfaceMongo {
+  _id: { $oid: string },
+  latitude: { $numberDecimal: number }, 
+  longitude: { $numberDecimal: number }, 
+  scRSSI: number, 
+  scRSRP: number,
+  scSINR: number,
+  scRSRQ: number,
+};
+
 export interface retriveDataFromDBInterface {
   _id: { $oid: string },
   date: { $date: Date },
@@ -60,8 +70,8 @@ export interface retriveDataFromDBInterface {
   imsi: string,
   mode: string,
   band: string,
-  latitude: number,
-  longitude: number,
+  latitude: { $numberDecimal: number },
+  longitude: { $numberDecimal: number },
   scRSSI: string,
   scRSRP: string,
   scSINR: string,
