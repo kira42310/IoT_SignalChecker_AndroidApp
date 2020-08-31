@@ -284,9 +284,19 @@ const SignalChecker: React.FC = () => {
 
   const movingWindowCheckNetwork = async () => {
     const s = await Network.getStatus();
-    if( s.connected ) setMovingWindow( false );
+    if( s.connected ) setMovingWindow( true );
     else setError( 'No internet access!' );
   }
+
+  const pingWindowClearInterval = () => {
+    clearInterval( timerId.current );
+    setPingWindow( true );
+  };
+
+  const pingWindowSetInterval = () => {
+    setIntervalCheckConnect();
+    setPingWindow( false );
+  };
 
   const disableModule = async () => {
     aController.current!.abort();
@@ -371,7 +381,8 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => setPingWindow(true) } disabled={ !isConnect }  expand="full">Ping</IonButton>
+              <IonButton onClick={ () => pingWindowClearInterval() } disabled={ !isConnect }  expand="full">Ping</IonButton>
+              {/* <IonButton onClick={ () => pingWindowClearInterval() }  expand="full">Ping</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
@@ -381,7 +392,8 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
-              <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton>
+              {/* <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton> */}
+              <IonButton onClick={ () => movingWindowCheckNetwork() } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton>
             </IonCol>
           </IonRow>
           <IonRow>
@@ -419,7 +431,7 @@ const SignalChecker: React.FC = () => {
           <IonToolbar>
             <IonTitle>Ping</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={ () => setPingWindow(false) }>Close</IonButton>
+              <IonButton onClick={ () => pingWindowSetInterval() }>Close</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
@@ -439,8 +451,6 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <StaticCheck 
           Disconnect={ Disconnect }
-          onAutoTest={ onAutoTest }
-          offAutoTest={ offAutoTest }
           url={ rpiDestination! } 
           info={ info }
         />
@@ -451,7 +461,7 @@ const SignalChecker: React.FC = () => {
           <IonToolbar>
             <IonTitle>Moving Test</IonTitle>
             <IonButtons slot="end">
-              <IonButton disabled={ movingWindowClose } onClick={ () => movingWindowCheckNetwork() }>Close</IonButton>
+              <IonButton disabled={ movingWindowClose } onClick={ () => setMovingWindow( false ) }>Close</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>

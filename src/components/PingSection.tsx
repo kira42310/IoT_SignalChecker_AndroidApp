@@ -61,11 +61,12 @@ const PingSection: React.FC<{
     var result:any;
     setLoading(true);
     await fetch( 'http://' + props.url + '/pingactivate' );
-    for( var i = 0; i <= retry; i++){
+    for( var i = 0; i <= retry; i++ ){
       result = await fetch( url )
         .then( (response) => response.json() )
-        .then( (data) => { return data; })
-      if( result ){ break; }
+        .then( (data) => { return data; });
+      if( result === 'F' ){ continue; }
+      else break;
     };
     await fetch( 'http://' + props.url + '/pingdeactivate');
     setLoading(false);

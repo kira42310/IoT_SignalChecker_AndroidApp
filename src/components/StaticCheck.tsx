@@ -22,8 +22,6 @@ const { Geolocation, } = Plugins;
 
 const StaticCheck: React.FC<{
   Disconnect: ( res: string) => void,
-  onAutoTest: ( tname: string ) => void,
-  offAutoTest: ( tname: string ) => void,
   url: string,
   info: string,
 }> = (props) => {
