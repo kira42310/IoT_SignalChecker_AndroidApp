@@ -15,7 +15,7 @@ import { GoogleMap, Marker } from "@react-google-maps/api";
 import { Plugins, GeolocationPosition } from "@capacitor/core";
 import { trash } from "ionicons/icons";
 import { AppSettings } from "../AppSettings";
-import { signalDataInterface, markerInterface } from "../AppFunction";
+import { markerInterface } from "../AppFunction";
 
 const { Geolocation, } = Plugins;
 
@@ -70,7 +70,7 @@ const MovingCheck: React.FC<{
     else data = props.info + '_' + location.coords.latitude + '_' + location.coords.longitude + '_';
 
     let url = 'http://' + props.url + '/signalStrength?insert=';
-    if( insertDB ) url = url + 'y&dblocation=' + AppSettings.DB_LOCATION + '&data=' + data;
+    if( insertDB ) url = url + 'y&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
     else url = url + 'n';
 
     const controller = new AbortController();

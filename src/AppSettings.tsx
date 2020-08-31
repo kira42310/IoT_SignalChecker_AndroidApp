@@ -5,6 +5,7 @@ export class AppSettings {
   public static BAND = "1";
   public static APN = "ciot";
   public static DB_LOCATION = "158.108.38.94:32124";
+  public static MQT_LOCATION = "158.108.38.94:32125";
   public static GOOGLE_API_KEY = "AIzaSyDGaZkYBcT81QHkokUy-slamRd_yxUsq1E";
   public static OPENCAGE_API_KEY = "1066506c22ee4bfbad90e10a75411ae6";
   public static TRACKING_DELAY: number = 30;

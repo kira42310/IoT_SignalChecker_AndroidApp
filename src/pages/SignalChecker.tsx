@@ -39,10 +39,10 @@ const SignalChecker: React.FC = () => {
   const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
-  const [ imei, setIMEI ] = useState<string>( "0" );
-  const [ imsi, setIMSI ] = useState<string>();
-  const [ mode, setMode ] = useState<string>();
-  const [ band, setBand ] = useState<string>();
+  const [ imei, setIMEI ] = useState<string>( "-" );
+  const [ imsi, setIMSI ] = useState<string>( "-" );
+  const [ mode, setMode ] = useState<string>( "-" );
+  const [ band, setBand ] = useState<string>( "-" );
   const [ apn, setAPN ] = useState<string>();
   const [ ip, setIP ] = useState<string>();
   const [ connectionWindow, setConnectionWindow ] = useState<boolean>(false);
@@ -97,16 +97,20 @@ const SignalChecker: React.FC = () => {
       setIsConnect( true );
       setDisableBtn( true );
       setColorStatus( 'success' );
-      const data = await fetch( "http://" + url + "/info" )
+      const res = await fetch( "http://" + url + "/info" )
         .then(( response ) => response.json() )
         .then(( data ) => { return data })
         .catch( e => console.log( e ));
-      setIMEI( data[0] );
-      setIMSI( data[1] );
-      setMode( data[2] );
-      setBand( data[3] );
-      setIP( data[4] );
-      setAPN( data[5] );
+      setIMEI( res[0] );
+      setIMSI( res[1] );
+      setMode( res[2] );
+      setBand( res[3] );
+      setIP( res[4] );
+      setAPN( res[5] );
+      const token = await Storage.get({ key: 'DBToken' });
+      if( token && token.value !== null && token.value !== '' ) {
+        prepareInfo( token.value, res[0], res[1], res[2], res[3] )
+      }
     }
     else if( result === "F" ){
       // clearInterval( timerId.current );
@@ -150,15 +154,10 @@ const SignalChecker: React.FC = () => {
       setMode( res[2] );
       setBand( res[3] );
       setIP( res[4] );
+      setAPN( res[5] );
       const token = await Storage.get({ key: 'DBToken' });
-      if( token ) {
-        setInfo( 
-          token.value + '_' +
-          res[0] + '_' + 
-          res[1] + '_' +
-          res[2] + '_' +
-          res[3] + '_'
-        );
+      if( token && token.value !== null && token.value !== '' ) {
+        prepareInfo( token.value, res[0], res[1], res[2], res[3] )
       }
       setIntervalCheckConnect();
     }
@@ -173,6 +172,18 @@ const SignalChecker: React.FC = () => {
       setColorStatus( 'danger' );
     }
     setLoading( false );
+  };
+
+  const prepareInfo = ( token: string, imei0: string = imei, imsi0: string = imsi, mode0: string = mode, band0: string = band ) => {
+    if( imei0 !== '-' && imsi0 !== '-' && mode0 !== '-' && band0 !== '-' ){
+      setInfo( 
+        token + '_' +
+        imei0 + '_' + 
+        imsi0 + '_' +
+        mode0 + '_' +
+        band0
+      );
+    }
   };
 
   // const insertDB = async ( lat: number, lng: number, d: signalDataInterface) => {
@@ -396,6 +407,7 @@ const SignalChecker: React.FC = () => {
         </IonHeader>
         <ConnectionSetting 
           checkConnect={ setIntervalCheckConnect }
+          prepareInfo={ prepareInfo }
           mode={ mode }
           band={ band }
         />

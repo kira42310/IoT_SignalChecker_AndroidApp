@@ -20,6 +20,7 @@ const { Storage } = Plugins;
 
 const ConnectionSetting: React.FC<{
   checkConnect: () => void,
+  prepareInfo: ( token: string ) => void,
   mode: string | undefined,
   band: string | undefined,
 }> = (props) => {
@@ -138,6 +139,7 @@ const ConnectionSetting: React.FC<{
     setBand( AppSettings.BAND );
     setRPiIP( AppSettings.RPI_IP );
     setRPiPort( AppSettings.RPI_PORT );
+    setAPN( 'ciot' );
   };
 
   const setAPN = async ( apn: string) => {
@@ -184,6 +186,7 @@ const ConnectionSetting: React.FC<{
   const saveToken = async ( token: string ) => {
     await Storage.set({ key: 'DBToken', value: token });
     setDBToken( token );
+    props.prepareInfo( token );
   };
 
   return (

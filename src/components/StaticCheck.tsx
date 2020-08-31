@@ -92,7 +92,7 @@ const StaticCheck: React.FC<{
     }
     else data = props.info + '_' + location.coords.latitude + '_' + location.coords.longitude + '_';
 
-    let url = 'http://' + props.url + '/starttest?interval=' + itv.toString() + '&dblocation=' + AppSettings.DB_LOCATION + '&data=' + data;
+    let url = 'http://' + props.url + '/starttest?interval=' + itv.toString() + '&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
 
     const controller = new AbortController();
     const signal = controller.signal;

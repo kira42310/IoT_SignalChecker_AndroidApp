@@ -51,10 +51,10 @@ const ManualCheck: React.FC<{
       setErrorConnection( 'No database token, insert database failed');
       insertDB = false;
     }
-    else data = props.info + '_' + location.coords.latitude + '_' + location.coords.longitude + '_';
+    else data = props.info + '_' + location.coords.latitude.toString() + '_' + location.coords.longitude.toString() + '_';
 
     let url = 'http://' + props.url + '/signalStrength?insert=';
-    if( insertDB ) url = url + 'y&dblocation=' + AppSettings.DB_LOCATION + '&data=' + data;
+    if( insertDB ) url = url + 'y&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
     else url = url + 'n';
 
     const controller = new AbortController();
@@ -182,10 +182,10 @@ const ManualCheck: React.FC<{
                 </IonCardSubtitle>
               </IonCardHeader>
               <IonCardContent>
-                <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n2RSSI }</IonChip><br/>
-                <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n2RSRP }</IonChip><br/>
-                <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n2SINR }</IonChip><br/>
-                <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n2RSRQ }</IonChip>
+                <IonChip color={ !data? "black": signalColor?.n2RSSI }>{ !data? "00": data.n2RSSI }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n2RSRP }>{ !data? "00": data.n2RSRP }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n2SINR }>{ !data? "00": data.n2SINR }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n2RSRQ }>{ !data? "00": data.n2RSRQ }</IonChip>
               </IonCardContent>
             </IonCard>
           </IonCol>
@@ -197,10 +197,10 @@ const ManualCheck: React.FC<{
                 </IonCardSubtitle>
               </IonCardHeader>
               <IonCardContent>
-                <IonChip color={ !data? "black": signalColor?.n1RSSI }>{ !data? "00": data.n3RSSI }</IonChip><br/>
-                <IonChip color={ !data? "black": signalColor?.n1RSRP }>{ !data? "00": data.n3RSRP }</IonChip><br/>
-                <IonChip color={ !data? "black": signalColor?.n1SINR }>{ !data? "00": data.n3SINR }</IonChip><br/>
-                <IonChip color={ !data? "black": signalColor?.n1RSRQ }>{ !data? "00": data.n3RSRQ }</IonChip>
+                <IonChip color={ !data? "black": signalColor?.n3RSSI }>{ !data? "00": data.n3RSSI }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n3RSRP }>{ !data? "00": data.n3RSRP }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n3SINR }>{ !data? "00": data.n3SINR }</IonChip><br/>
+                <IonChip color={ !data? "black": signalColor?.n3RSRQ }>{ !data? "00": data.n3RSRQ }</IonChip>
               </IonCardContent>
             </IonCard>
           </IonCol>
