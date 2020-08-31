@@ -105,7 +105,8 @@ const MapInterface: React.FC<{
     const res = await fetch( 'https://api.opencagedata.com/geocode/v1/json?key='+ AppSettings.OPENCAGE_API_KEY + '&limit=1&q=' + address)
       .then( response => response.json() )
       .then( d => { return d; });
-    setCenter( new google.maps.LatLng( res.results[0].geometry.lat, res.results[0].geometry.lng ));
+    if( res.results[0] ) setCenter( new google.maps.LatLng( res.results[0].geometry.lat, res.results[0].geometry.lng ));
+    else setError( 'Cannot find place name ' + address );
   };
 
   function getMap() {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
     IonPage, 
     IonHeader, 
@@ -9,17 +9,10 @@ import {
     IonSelect,
     IonSelectOption,
     IonCard,
-    IonItem,
-    IonInput,
-    IonGrid,
-    IonRow,
-    IonCol,
-    IonButton,
-    IonIcon,
-    useIonViewWillEnter, 
+    useIonViewWillEnter,
+    IonSearchbar, 
 } from "@ionic/react";
 import { Plugins } from "@capacitor/core";
-import { enterOutline } from "ionicons/icons";
 import MapInterface from "../components/MapInterface";
 
 const { Network } = Plugins;
@@ -27,10 +20,20 @@ const { Network } = Plugins;
 const MapInfo: React.FC = () => {
 
   const [ error, setError ] = useState<string>();
-  const [ address, setAddress ] = useState<string>("");
+  const address = useRef<string>();
   const [ newCenter, setNewCenter ] = useState<string>("");
   const [ showValue, setShowValue ] = useState< "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" >("scRSSI");
   const [ networkStatus, setNetworkStatus ] = useState<boolean>( false );
+
+  useEffect( () => {
+    let searchbarInput = document.getElementById( 'searchlocation' );
+    searchbarInput?.addEventListener( 'keyup', function(event) {
+      if( event.keyCode === 13 ){
+        event.preventDefault();
+        setNewCenter( address.current! );
+      }
+    });
+  },[]);
 
   useIonViewWillEnter( () => {
     getNetworkStatus();
@@ -53,20 +56,12 @@ const MapInfo: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       <IonContent>
-        <IonGrid>
-          <IonRow>
-            <IonCol size="10">
-              <IonItem>
-                <IonInput debounce={ 500 } onIonChange={ e => setAddress( e.detail.value! ) } clearInput />
-              </IonItem>
-            </IonCol>
-            <IonCol size="2">
-              <IonButton onClick={ () => { setNewCenter( address ) }} >
-                <IonIcon slot="icon-only" icon={ enterOutline } />
-              </IonButton>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
+        <IonToolbar>
+          <IonSearchbar id='searchlocation' 
+            debounce={ 500 } 
+            onIonChange={ e => address.current = e.detail.value! } 
+          />
+        </IonToolbar>
         {/* <MapInterface showValue={showValue} address={ newCenter } />: */}
         { networkStatus?
           <MapInterface showValue={showValue} address={ newCenter } />:
