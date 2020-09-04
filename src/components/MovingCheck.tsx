@@ -128,17 +128,16 @@ const MovingCheck: React.FC<{
 
   const startTest = ( insertDB: boolean = false ) => {
     setStartTestAlert( false );
-    props.onAutoTest( "moving" );
-    setStartStopBtn( false );
+    
     // interval in typescript is in millisec not sec
     const itv: number = ( +( intervalMin ) * 60000 ) + ( +( intervalSec ) * 1000 );
     if( itv === 0 ){
-      setLoading( false );
       setErrorConnection( 'Interval is 0 second, failed to start' );
-      props.offAutoTest( 'moving' );
-      setStartStopBtn( true );
       return ;
     }
+
+    props.onAutoTest( "moving" );
+    setStartStopBtn( false );
     
     signalStrength( insertDB )
     const id = setInterval( () => signalStrength( insertDB ) , itv );

@@ -73,16 +73,17 @@ const StaticCheck: React.FC<{
 
   const startTest = async () => {
     setStartTestAlert( false );
-    setStartStopBtn( false );
-    setLoading( true );
 
     // interval in python is sec not millisec.
     const itv: number = ( intervalMin * 60 ) + intervalSec;
     if( itv === 0 ){
-      setLoading( false );
       setErrorConnection( 'Interval is 0 second, failed to start' );
       return ;
     }
+
+    setStartStopBtn( false );
+    setLoading( true );
+
 
     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
 
@@ -104,7 +105,6 @@ const StaticCheck: React.FC<{
       .then( response => response.json() )
       .then( d => { return d; });
     if( signal.aborted ){
-      setLoading( false );
       setStartStopBtn( true );
       setErrorConnection( 'Cannot connect to RPi' );
     }
@@ -279,7 +279,7 @@ const StaticCheck: React.FC<{
         <IonLoading 
           isOpen={loading} 
           message={'Please Wait...'} 
-          backdropDismiss={true}
+          backdropDismiss={ false }
           onDidDismiss={ () => setLoading( false )}
         />
       </IonGrid>
