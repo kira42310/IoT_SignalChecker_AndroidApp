@@ -8,11 +8,11 @@ const HistoryCard: React.FC<{ data: retriveDataFromDBInterface }> = (props) => {
   const timestampConverter = () => {
     const rawData = new Date(props.data.date.$date);
     return (
-      rawData.getDate()+"/"
-      +rawData.getMonth()+"/"
-      +rawData.getFullYear()+" "
-      +("0"+rawData.getHours()).substr(-2)+":"
-      +("0"+rawData.getMinutes()).substr(-2)
+      rawData.getDate() + " "
+      + rawData.toLocaleString( 'default', { month: 'short' }) + " "
+      + rawData.getFullYear() + "  "
+      + ( "0" + rawData.getHours() ).substr( -2 ) + ":"
+      + ( "0" + rawData.getMinutes() ).substr( -2 )
     );
   };
 
