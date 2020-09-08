@@ -60,7 +60,6 @@ const PingSection: React.FC<{
     const url = ("http://" + props.url + "/ping?site=" + site )
     var result:any;
     setLoading(true);
-    await fetch( 'http://' + props.url + '/pingactivate' );
     for( var i = 0; i <= retry; i++ ){
       result = await fetch( url )
         .then( (response) => response.json() )
@@ -68,7 +67,6 @@ const PingSection: React.FC<{
       if( result === 'F' ){ continue; }
       else break;
     };
-    await fetch( 'http://' + props.url + '/pingdeactivate');
     setLoading(false);
     if( result[0] === "F" ) { setErrorConnection("Cannot Ping!"); return ;}
     setData({ send: result[0], recv: result[1], avg: result[2] });
@@ -109,7 +107,7 @@ const PingSection: React.FC<{
         </IonCard>
         }
         <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
-        <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={true}/>
+        <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={ false }/>
       </IonGrid>
     </IonContent>
   );
