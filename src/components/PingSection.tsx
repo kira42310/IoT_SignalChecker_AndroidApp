@@ -106,7 +106,7 @@ const PingSection: React.FC<{
           </IonCardContent>
         </IonCard>
         }
-        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
+        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okay", handler: clearErrorConnection }]} />
         <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={ false }/>
       </IonGrid>
     </IonContent>
