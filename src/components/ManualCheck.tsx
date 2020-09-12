@@ -240,7 +240,7 @@ const ManualCheck: React.FC<{
             { text: "No", handler: () => startTest( false ) }
           ]}
         />
-        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
+        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Ok", handler: clearErrorConnection }]} />
         <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={ false }/>
       </IonGrid>
     </IonContent>

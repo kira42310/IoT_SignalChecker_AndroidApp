@@ -62,9 +62,6 @@ const MovingCheck: React.FC<{
         setErrorConnection( 'Static test is still in use' );
         setStartStopBtn( false );
       }
-      if( res === 'F' ){
-        setStartStopBtn( true );
-      }
       else if( signal.aborted ){
         props.Disconnect( 'D' );
         setErrorConnection( 'Cannot connect to RPi' );
@@ -136,8 +133,8 @@ const MovingCheck: React.FC<{
       return ;
     }
 
-    props.onAutoTest( "moving" );
     setStartStopBtn( false );
+    props.onAutoTest( "moving" );
     
     signalStrength( insertDB )
     const id = setInterval( () => signalStrength( insertDB ) , itv );
@@ -176,7 +173,7 @@ const MovingCheck: React.FC<{
   const containerStyle = {
     width: '100%',
     height: '75%',
-  }
+  };
 
   const convertDataToIcon = ( data: number ) => {
     return createPinSymbol( AppSettings.getColorRssiRsrp( data ) );
@@ -191,7 +188,7 @@ const MovingCheck: React.FC<{
       strokeWeight: 2,
       scale: 1
     };
-  }
+  };
 
   const secColumn: PickerColumn = {
     name: "sec",
@@ -291,7 +288,7 @@ const MovingCheck: React.FC<{
           { text: "No", handler: () => startTest( false ) }
         ]}
       />
-      <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
+      <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Ok", handler: clearErrorConnection }]} />
       <IonLoading isOpen={loading} message={'Please Wait...'} backdropDismiss={ false }/>
     </IonGrid>
   );

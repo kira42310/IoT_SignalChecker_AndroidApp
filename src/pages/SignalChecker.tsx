@@ -490,7 +490,7 @@ const SignalChecker: React.FC = () => {
         />
       </IonModal>
 
-      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
+      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Ok", handler: clearError }]} />
       <IonLoading 
         isOpen={ loading } 
         message={ "Please Wait..." } 

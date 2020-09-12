@@ -76,7 +76,7 @@ const MapInfo: React.FC = () => {
           </IonSelect>
         </IonCard>
       </IonContent>
-      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okay", handler: clearError}]} />
+      <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Ok", handler: clearError}]} />
     </IonPage>
   );
 };

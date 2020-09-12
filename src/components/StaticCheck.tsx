@@ -53,9 +53,6 @@ const StaticCheck: React.FC<{
       if( res === 'P' ){
         setStartStopBtn( false );
       }
-      else if( res === 'F' ){
-        setStartStopBtn( true );
-      }
       else if( signal.aborted ){
         props.Disconnect( 'D' );
         setErrorConnection( 'Cannot connect to RPi' );
@@ -81,22 +78,23 @@ const StaticCheck: React.FC<{
       return ;
     }
 
-    setStartStopBtn( false );
-    setLoading( true );
-
-
     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
 
     let data = '';
     if( location.code ){ 
       setErrorConnection( 'No location service, insert DB failed' );
+      return ;
     }
     else if( props.info === '' ){
       setErrorConnection( 'No database token, insert database failed');
+      return ;
     }
     else data = props.info + ',' + location.coords.latitude + ',' + location.coords.longitude;
 
     let url = 'http://' + props.url + '/starttest?interval=' + itv.toString() + '&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
+
+    setStartStopBtn( false );
+    setLoading( true );
 
     const controller = new AbortController();
     const signal = controller.signal;
@@ -275,7 +273,7 @@ const StaticCheck: React.FC<{
             { text: "No", handler: () => setStartTestAlert( false )}
           ]}
         />
-        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Okey", handler: clearErrorConnection }]} />
+        <IonAlert isOpen={!!errorConnection} message={errorConnection} buttons={[{ text: "Ok", handler: clearErrorConnection }]} />
         <IonLoading 
           isOpen={loading} 
           message={'Please Wait...'} 

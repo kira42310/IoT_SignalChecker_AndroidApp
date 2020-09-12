@@ -293,7 +293,7 @@ const ConnectionSetting: React.FC<{
         <IonAlert 
           isOpen={!!errorConnection} 
           message={errorConnection} 
-          buttons={[{ text: "Okey", handler: clearErrorConnection }]} 
+          buttons={[{ text: "Ok", handler: clearErrorConnection }]} 
         />
         <IonLoading 
           isOpen={loading} 

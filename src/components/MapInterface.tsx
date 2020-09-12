@@ -133,7 +133,7 @@ const MapInterface: React.FC<{
               </div>
             </InfoWindow>
           }
-        <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Okey", handler: clearError }]} />
+        <IonAlert isOpen={!!error} message={error} buttons={[{ text: "Ok", handler: clearError }]} />
       </GoogleMap>
     );
   };
