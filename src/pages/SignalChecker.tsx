@@ -36,7 +36,6 @@ const { Storage, Network, } = Plugins;
 const SignalChecker: React.FC = () => {
 
   const [ isConnect, setIsConnect ] = useState<boolean>( false );
-  // const [ isConnect, setIsConnect ] = useState<boolean>( true );
   const [ colorStatus, setColorStatus ] = useState<'success' | 'danger' | 'warning'>( 'danger' );
   const [ rpiDestination, setRPiDestination ] = useState<string>();
   const [ error, setError ] = useState<string>();
@@ -58,15 +57,18 @@ const SignalChecker: React.FC = () => {
   const timerId = useRef<any>();
   const aController = useRef<AbortController>();
 
+  // Ion life cycle before load into the page, it will start check RPi available.
   useIonViewDidEnter( async () => {
     setIntervalCheckConnect();
   });
 
+  // Ion life cycle before leave tab to clear interval and unfinish fetch to RPi.
   useIonViewWillLeave( () => {
     aController.current!.abort();
     clearInterval( timerId.current );
   });
 
+  // function for prepare url use to connect to RPi.
   const getURL = async () => {
     let url: string;
     const ip = await (await Storage.get({ key: "rpiIP" })).value;
@@ -77,12 +79,14 @@ const SignalChecker: React.FC = () => {
     return url;
   };
 
+  // function for set checkConnect interval.
   const setIntervalCheckConnect = () => {
     clearInterval( timerId.current );
     checkConnect();
     timerId.current = setInterval( () => checkConnect(), AppSettings.CONNECTION_INTERVAL );
   };
 
+  // function for check connecting between RPi board and App.
   const checkConnect = async () => {
     const url = await getURL();
 
@@ -127,6 +131,7 @@ const SignalChecker: React.FC = () => {
     }
   };
 
+  // function for connect to serving cell.
   const reconnect = async () => {
     setLoading( true );
     clearInterval( timerId.current );
@@ -175,6 +180,7 @@ const SignalChecker: React.FC = () => {
     setLoading( false );
   };
 
+  // function for create message for insert database by mqtt protocal.
   const prepareInfo = ( token: string, imei0: string = imei, imsi0: string = imsi, mode0: string = mode, band0: string = band ) => {
     if( imei0 !== '-' && imsi0 !== '-' && mode0 !== '-' && band0 !== '-' ){
       setInfo( 
@@ -187,66 +193,12 @@ const SignalChecker: React.FC = () => {
     }
   };
 
-  // const insertDB = async ( lat: number, lng: number, d: signalDataInterface) => {
-  //   if( !(await Storage.get({ key: 'DBToken'} ))){
-  //     setError( 'No database token' );
-  //     return ;
-  //   }
-  //   const body = Object.assign({
-  //     token: await (await Storage.get({ key: 'DBToken' })).value,
-  //     imei: imei,
-  //     imsi: imsi,
-  //     mode: mode,
-  //     band: band,
-  //     latitude: lat,
-  //     longitude: lng,
-  //   },d);
-  //   const dbOption = {
-  //     method: "POST",
-  //     headers: { 'Accept': 'application/json, text/plain, */*', "Content-Type": "application/json" },
-  //     body: JSON.stringify(body)
-  //   };
-    
-  //   const res = await fetch(AppSettings.DB_LOCATION + "/insertdb", dbOption)
-  //     .then((response) => response.json())
-  //     .then((result) => { return result })
-  //     .catch(error => console.log(error));
-  //   // let url = await getURL();
-  //   // url = 'http://' + url + '/mqtt&url=' + AppSettings.DB_LOCATION + '&data=' + data;
-  //   // const res = await fetch( url );
-  //   if( res ) setError('Insert database success');
-  //   else setError('Failed to insert database');
-  // };
-
-  // const changeIsConnect = async ( imei: string, imsi: string, mode: string, band: string, ip: string, apn: string, destination: string ) => {
-  //   setIsConnect( true );
-  //   setDisableBtn( true );
-  //   setColorStatus( 'success' );
-  //   setIMEI(imei);
-  //   setIMSI(imsi);
-  //   setMode(mode);
-  //   setBand(band);
-  //   setIP(ip);
-  //   setAPN( apn );
-  //   setRPiDestination(destination);
-  //   const token = await Storage.get({ key: 'DBToken' });
-  //   if( token ) {
-  //     setInfo( 
-  //       token.value + '_' +
-  //       imei + '_' + 
-  //       imsi + '_' +
-  //       mode + '_' +
-  //       band + '_'
-  //     );
-  //   }
-  //   setConnectionWindow(false);
-  //   setIntervalCheckConnect();
-  // };
-
+  // function use to clear alert message.
   const clearError = () => {
     setError("");
   };
 
+  // function use to change status when disconnect from the cell or board.
   const Disconnect = ( res: string ) => {
     clearInterval( timerId.current );
     setManualWindow( false );
@@ -268,6 +220,7 @@ const SignalChecker: React.FC = () => {
     }
   };
 
+  // function use to disable close button of auto moving test.
   const onAutoTest = ( tname: string ) => {
     clearInterval( timerId.current );
     if( tname === "moving" ){
@@ -275,6 +228,7 @@ const SignalChecker: React.FC = () => {
     }
   };
 
+  // function use to enable close button of auto moving test.
   const offAutoTest = ( tname: string ) => {
     if( tname === "moving" ){
       setMovingWindowClose( false );
@@ -282,22 +236,26 @@ const SignalChecker: React.FC = () => {
     setIntervalCheckConnect();
   };
 
+  // function use to check if network is available, because google map need internet to load map components.
   const movingWindowCheckNetwork = async () => {
     const s = await Network.getStatus();
     if( s.connected ) setMovingWindow( true );
     else setError( 'No internet access!' );
   }
 
+  // function use to clear interval check RPi available and open ping page.
   const pingWindowClearInterval = () => {
     clearInterval( timerId.current );
     setPingWindow( true );
   };
 
+  // function use to enable check connection after close ping page.
   const pingWindowSetInterval = () => {
     setIntervalCheckConnect();
     setPingWindow( false );
   };
 
+  // Function use to disable RPi IoT board not the RPi itself.
   const disableModule = async () => {
     aController.current!.abort();
     const controller = new AbortController();
@@ -382,7 +340,6 @@ const SignalChecker: React.FC = () => {
           <IonRow>
             <IonCol>
               <IonButton onClick={ () => pingWindowClearInterval() } disabled={ !isConnect }  expand="full">Ping</IonButton>
-              {/* <IonButton onClick={ () => pingWindowClearInterval() }  expand="full">Ping</IonButton> */}
             </IonCol>
           </IonRow>
           <IonRow>
@@ -392,7 +349,6 @@ const SignalChecker: React.FC = () => {
           </IonRow>
           <IonRow>
             <IonCol>
-              {/* <IonButton onClick={ () => setMovingWindow( true ) } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton> */}
               <IonButton onClick={ () => movingWindowCheckNetwork() } disabled={ !isConnect } expand="full">Auto Moving Test</IonButton>
             </IonCol>
           </IonRow>

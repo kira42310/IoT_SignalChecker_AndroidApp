@@ -25,6 +25,7 @@ const MapInfo: React.FC = () => {
   const [ showValue, setShowValue ] = useState< "scRSSI" | "scRSRP" | "scSINR" | "scRSRQ" >("scRSSI");
   const [ networkStatus, setNetworkStatus ] = useState<boolean>( false );
 
+  // function for set event to enter key use with search bar.
   useEffect( () => {
     let searchbarInput = document.getElementById( 'searchlocation' );
     searchbarInput?.addEventListener( 'keyup', function(event) {
@@ -35,15 +36,18 @@ const MapInfo: React.FC = () => {
     });
   },[]);
 
+  // ion life cycle before load into page, check network available if not google map won't load properly.
   useIonViewWillEnter( () => {
     getNetworkStatus();
   });
 
+  // function for check network available.
   const getNetworkStatus = async () => {
     const s = await Network.getStatus();
     setNetworkStatus( s.connected );
   };
 
+  // function for clear alert message.
   const clearError = () => {
     setError("")
   };
@@ -62,7 +66,6 @@ const MapInfo: React.FC = () => {
             onIonChange={ e => address.current = e.detail.value! } 
           />
         </IonToolbar>
-        {/* <MapInterface showValue={showValue} address={ newCenter } />: */}
         { networkStatus?
           <MapInterface showValue={showValue} address={ newCenter } />:
           <p>No internet access!</p>

@@ -31,6 +31,7 @@ const ManualCheck: React.FC<{
   const [ loading, setLoading ] = useState<boolean>( false );
   const [ enableBtn, setEnableBtn ] = useState<boolean>( true );
 
+  // function for load previous data before components load.
   useEffect( () => {
     if( sessionStorage.getItem( 'manualTestData' )){
       const tmp = JSON.parse( sessionStorage.getItem( 'manualTestData' )! );
@@ -39,6 +40,7 @@ const ManualCheck: React.FC<{
     }
   }, []);
 
+  // function for check auto static test is running or not if auto static test is running, disable test button.
   useEffect( () => {
     const checkRPiState = async () => {
       let url = 'http://' + props.url + '/staticStatus';
@@ -64,6 +66,7 @@ const ManualCheck: React.FC<{
     checkRPiState();
   }, [ props ]);
 
+  // function for send command to RPi board to get signal stregth and for on UI and if insert database is yes, it will prepare info message for RPi to insert database by mqtt protocal.
   const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
@@ -106,12 +109,14 @@ const ManualCheck: React.FC<{
     setLoading(false);
   };
 
+  // function for start test.
   const startTest = ( insertDB: boolean = false ) => {
     setStartTestAlert( false );
     clearMeasure();
     signalStrength( insertDB )
   };
 
+  // function for convert UI color to match the signal strength values.
   const convertSignalToColor = ( d: any ): signalColorInterface => {
     return {
       "scRSSI": AppSettings.getColorRssiRsrp( d[ 'scRSSI' ] ),
@@ -133,14 +138,17 @@ const ManualCheck: React.FC<{
     };
   };
 
+  // function for save data to session storage.
   const saveSession = ( res: any ) => {
     sessionStorage.setItem( 'manualTestData', JSON.stringify(res) );
   };
 
+  // function for clear alert message.
   const clearErrorConnection = () => {
     setErrorConnection("");
   };
 
+  // function for clear value info.
   const clearMeasure = () => {
     setData( null );
     sessionStorage.removeItem( 'manualTestData' );

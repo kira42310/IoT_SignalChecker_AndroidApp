@@ -40,6 +40,7 @@ const StaticCheck: React.FC<{
     'scRSSI': string, 'scRSRP': string, 'scSINR': string, 'scRSRQ': string, 
   }>();
 
+  // function use before components load, will check static test status and reflect to UI or button.
   useEffect( () => {
     const checkRPiState = async () => {
       let url = 'http://' + props.url + '/staticStatus';
@@ -67,7 +68,7 @@ const StaticCheck: React.FC<{
     checkRPiState();
   }, [ props ]);
 
-
+  // function to start static test and send info message to insert database to RPi board by mqtt protocal.
   const startTest = async () => {
     setStartTestAlert( false );
 
@@ -109,6 +110,7 @@ const StaticCheck: React.FC<{
     setLoading( false );
   };
 
+  // function to stop static test.
   const stopTest = async () => {
     let url = 'http://' + props.url + '/stoptest';
 
@@ -136,7 +138,7 @@ const StaticCheck: React.FC<{
     sessionStorage.setItem( 'staticTestData', JSON.stringify( d ) );
   };
 
-
+  // function to get to color of each data.
   const convertSignalToColor = ( d: any ) => {
     return {
       "scRSSI": AppSettings.getColorRssiRsrp( d[ 'scRSSI' ] ),
@@ -146,10 +148,12 @@ const StaticCheck: React.FC<{
     };
   };
 
+  // function to clear alert message.
   const clearErrorConnection = () => {
     setErrorConnection("");
   };
 
+  // function to clear average data from UI and in RPi board.
   const clearMeasure = async () => {
     setSignalData( null );
     sessionStorage.removeItem( 'staticTestData' );
@@ -161,6 +165,7 @@ const StaticCheck: React.FC<{
     await fetch( url, { signal }).then( response => response.json() ).then( d => { return d; });
   };
 
+  // second column for ion picker.
   const secColumn: PickerColumn = {
     name: "sec",
     options: [
@@ -171,6 +176,7 @@ const StaticCheck: React.FC<{
     ],
   };
 
+  // minute column for ion picker.
   const minColumn: PickerColumn = {
     name: "min",
     options: [

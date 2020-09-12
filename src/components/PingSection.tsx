@@ -27,6 +27,7 @@ const PingSection: React.FC<{
   const [ loading, setLoading ] = useState<boolean>(false);
   const [ enableBtn, setEnableBtn ] = useState<boolean>( true );
 
+  // function use before components load, will check static test status and reflect to UI or button.
   useEffect( () => {
     const checkRPiState = async () => {
       let url = 'http://' + props.url + '/staticStatus';
@@ -52,10 +53,12 @@ const PingSection: React.FC<{
     checkRPiState();
   }, [ props ]);
 
+  // function for clear alert message.
   const clearErrorConnection = () => {
     setErrorConnection("");
   };
 
+  // function for send url or site to RPi board to ping.
   const pingSite = async () => {
     const url = ("http://" + props.url + "/ping?site=" + site )
     var result:any;

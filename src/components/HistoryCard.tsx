@@ -5,6 +5,7 @@ import { retriveDataFromDBInterface } from "../AppFunction";
 
 const HistoryCard: React.FC<{ data: retriveDataFromDBInterface }> = (props) => {
 
+  // function for convert UTC time to human readable.
   const timestampConverter = () => {
     const rawData = new Date(props.data.date.$date);
     return (

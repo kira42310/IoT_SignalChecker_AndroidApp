@@ -19,6 +19,7 @@ const MapInterface: React.FC<{
   const [ markers, setMarkers ] = useState< markerInterfaceMongo[] >([]);
   const [ error, setError ] = useState<string>();
 
+  // ion life cycle before load into the page, get lat and lng for google maps.
   useIonViewWillEnter( () => {
     const getLocation = async () => {
       const tmp = await Geolocation.getCurrentPosition().catch( e => { return e; } );
@@ -28,18 +29,22 @@ const MapInterface: React.FC<{
     getLocation()
   });
 
+  // function will trigger when show value is change and clear info window.
   useEffect( () => {
     setIsInfo(false);
   }, [ props.showValue ]);
 
+  // function will trigger when address is change for set the new map center.
   useEffect( () => {
     if( props.address !== "" ) getToNewLocation( props.address );
   }, [ props.address ]);
 
+  // function for clear info window if out of map bound.
   const reloadMarker = async ( mapBound: google.maps.LatLngBounds ) => {
     if( !mapBound?.contains( new google.maps.LatLng( info?.lat!, info?.lng!) ) ) setIsInfo(false);
   };
 
+  // function for load data and create marker that is in the map bound.
   const loadData = async ( latNE: number, lngNE: number, latSW: number, lngSW: number ) => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -50,21 +55,25 @@ const MapInterface: React.FC<{
       .then( data => { setMarkers( data ); });
   };
 
+  // map style
   const containerStyle = {
     width: '100%',
     height: '80%',
   }
 
+  // info window style
   const divStyle = {
     background: `white`,
     border: `1px solid #ccc`,
     padding: 7
   }
   
+  // function will trigger after map is load to get the map object.
   const onMapLoad = async ( map: google.maps.Map ) => {
     setMapOBJ( map );
   };
 
+  // function to check is bound is chenge and load new data in the new map bound.
   const boundChange = () => {
     setCenter( new google.maps.LatLng( mapOBJ?.getCenter().lat()!, mapOBJ?.getCenter().lng()! ) );
     const mapBound = mapOBJ?.getBounds();
@@ -74,6 +83,7 @@ const MapInterface: React.FC<{
     }
   };
 
+  // function for create marker.
   const convertDataToIcon = ( data: number ) => {
     if( props.showValue === "scRSSI" || props.showValue === "scRSRP" ) return createPinSymbol( AppSettings.getColorRssiRsrp(data) );
     else if( props.showValue === "scSINR" ) return createPinSymbol( AppSettings.getColorSinr(data) );
@@ -81,6 +91,7 @@ const MapInterface: React.FC<{
     else return createPinSymbol("black");
   };
 
+  // function for create custom marker with specific color.
   function createPinSymbol( color: string ) {
     return {
       path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
@@ -92,15 +103,18 @@ const MapInterface: React.FC<{
     };
   }
 
+  // function to set info window with value by latlng.
   const infoWindowPanel = ( lat: number, lng: number, data: number ) => {
     setInfo({ lat: lat, lng: lng, data: data });
     setIsInfo( true );
   };
 
+  // function for clear alert message.
   const clearError = () => {
     setError("");
   };
 
+  // function for reverse geolocation use api from opencage to set the new map center.
   const getToNewLocation = async ( address: string ) => {
     const res = await fetch( 'https://api.opencagedata.com/geocode/v1/json?key='+ AppSettings.OPENCAGE_API_KEY + '&limit=1&q=' + address)
       .then( response => response.json() )
@@ -109,6 +123,7 @@ const MapInterface: React.FC<{
     else setError( 'Cannot find place name ' + address );
   };
 
+  // function for render google map.
   function getMap() {
     return (
       <GoogleMap mapContainerStyle={ containerStyle } 

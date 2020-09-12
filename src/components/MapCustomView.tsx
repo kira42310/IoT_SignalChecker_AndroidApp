@@ -6,7 +6,7 @@ const MapCustomView: React.FC<{
   longtitude: number,
 }> = (props) => {
 
-
+  // map style
   const containerStyle = {
     width: '100%',
     height: '100%',

@@ -40,6 +40,7 @@ const MovingCheck: React.FC<{
   const markers = useRef<markerInterface[]>([]);
   const trackerInterval = useRef<any>( 0 );
 
+  // function to get latitude and longitude use in set center for google map, check if there are previous data and put marker in map and after exit page will clear interval for auto moving test.
   useEffect( () => {
     getLocation();
     if( sessionStorage.getItem( 'movingTestMarker' ) ){
@@ -48,6 +49,7 @@ const MovingCheck: React.FC<{
     return ( () => clearInterval( trackerInterval.current ) );
   },[]);
 
+  // function use before components load, will check static test status and disable button if auto static test is running.
   useEffect( () => {
     const checkRPiState = async () => {
       let url = 'http://' + props.url + '/staticStatus';
@@ -70,12 +72,14 @@ const MovingCheck: React.FC<{
     checkRPiState();
   }, [ props ]);
 
+  // function for get latitude and longitude.
   const getLocation = async () => {
     const tmp = await Geolocation.getCurrentPosition().catch( e => { return e; });
     if( !tmp.code ) setMapCenter( new google.maps.LatLng( tmp.coords.latitude, tmp.coords.longitude ));
     else setErrorConnection( 'Location service not available' );
   };
 
+  // function for send command to get signal strength and put marker in the map and if want to insert database will send info message to insert database to RPi board by mqtt protocal.
   const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
@@ -123,6 +127,7 @@ const MovingCheck: React.FC<{
     setLoading(false);
   };
 
+  // function for start auto moving test.
   const startTest = ( insertDB: boolean = false ) => {
     setStartTestAlert( false );
     
@@ -141,6 +146,7 @@ const MovingCheck: React.FC<{
     trackerInterval.current = id;
   };
 
+  // function for stop auto moving test and save data to session storage.
   const stopTest = () => {
     clearInterval( trackerInterval.current );
     sessionStorage.setItem( 'movingTestMarker', JSON.stringify( markers.current ) );
@@ -148,6 +154,7 @@ const MovingCheck: React.FC<{
     setStartStopBtn( true );
   };
 
+  // function for convert data to use with marker.
   const convertToMarkerData = ( data: any, location: GeolocationPosition ): markerInterface => {
     return { 
       '_id': { $oid: Date.now().toString() },
@@ -160,25 +167,30 @@ const MovingCheck: React.FC<{
      }
   };
 
+  // function to clear alert message.
   const clearErrorConnection = () => {
     setErrorConnection("");
   };
 
+  // function to clear marker in the map.
   const clearMarker = () => {
     markers.current = markers.current.filter( m => m._id.$oid === "0" );
     sessionStorage.removeItem('movingTestMarker')
     setUpdate( update + 1 )
   };
 
+  // map style.
   const containerStyle = {
     width: '100%',
     height: '75%',
   };
 
+  // function to convert marker color according to RSSI value.
   const convertDataToIcon = ( data: number ) => {
     return createPinSymbol( AppSettings.getColorRssiRsrp( data ) );
   };
 
+  // function for create custom marker with specific color.
   function createPinSymbol( color: string ) {
     return {
       path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
@@ -190,6 +202,7 @@ const MovingCheck: React.FC<{
     };
   };
 
+  // second column for ion picker.
   const secColumn: PickerColumn = {
     name: "sec",
     options: [
@@ -200,6 +213,7 @@ const MovingCheck: React.FC<{
     ],
   };
 
+  // minute column for ion picker.
   const minColumn: PickerColumn = {
     name: "min",
     options: [

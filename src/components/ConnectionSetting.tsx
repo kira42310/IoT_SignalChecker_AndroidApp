@@ -36,6 +36,7 @@ const ConnectionSetting: React.FC<{
   const [ loading, setLoading ] = useState<boolean>( false );
   const connectController = useRef<AbortController>();
 
+  // function to set data from storage before components load.
   useEffect( () => {
     const loadSetting = async () => {
       if( await (await Storage.get({ key: 'mode'})).value ) {
@@ -54,22 +55,7 @@ const ConnectionSetting: React.FC<{
     loadSetting();
   },[ props ]);
 
-  // const loadSetting = async () => {
-  //   if( await (await Storage.get({ key: 'mode'})).value ) {
-  //     setMode( await (await Storage.get({ key: 'mode' })).value! );
-  //     setBand( await (await Storage.get({ key: 'band' })).value! );
-  //     setRPiIP( await (await Storage.get({ key: 'rpiIP' })).value! );
-  //     setRPiPort( +await (await Storage.get({ key: 'rpiPort' })).value! );
-  //   }
-  //   if( props.mode && props.band ){
-  //     setMode( props.mode );
-  //     setBand( props.band );
-  //   }
-  //   if( await Storage.get({ key: 'DBToken' }) ){
-  //     setDBToken( await (await Storage.get({ key: 'DBToken' })).value! );
-  //   }
-  // };
-
+  // function for check ip and port is valid.
   const ipPortInput = () => {
     if (
       !rpiIP ||
@@ -85,6 +71,7 @@ const ConnectionSetting: React.FC<{
     return false;
   };
 
+  // function to check input is IP.
   const validateIPAddress = (ip: string) => {
     if (
       /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
@@ -96,29 +83,12 @@ const ConnectionSetting: React.FC<{
     return false;
   };
 
+  // function for clear alert message.
   const clearErrorConnection = () => {
     setErrorConnection("");
   };
 
-  // const rpiConnect = async () => {
-  //   if ( ipPortInput() ) return ;
-  //   const url = ("http://" + rpiIP + ":" + rpiPort + "/connectBase?mode=" + mode + "&band=" + band )
-  //   setLoading( true );
-
-  //   connectController.current = new AbortController();
-  //   const signal = connectController.current.signal;
-  //   const id = setTimeout(() => { connectController.current!.abort() }, AppSettings.CONNECT_TIMEOUT );
-  //   const res = await fetch(url, { signal })
-  //     .then( (response) => response.json() )
-  //     .then( (data) => { return data; })
-  //     .catch( e => console.log(e) );
-  //   clearTimeout( id );
-  //   setLoading( false );
-  //   if( res === "F" ) { setErrorConnection("Cannot connect to Cell!"); return ; }
-  //   else if( signal.aborted ) { setErrorConnection("Cannt connect to RPi"); return ; }
-  //   props.onChangeIsConnect( res[0], res[1], res[2], res[3], res[4], res[5], rpiIP + ":" + rpiPort );
-  // };
-
+  // function for send command to RPi board to reset RPi GPIOs.
   const resetModule = async () => {
     const url = ("http://" + rpiIP + ":" + rpiPort + "/repair")
     setLoading( true );
@@ -134,6 +104,7 @@ const ConnectionSetting: React.FC<{
     else setErrorConnection( "Reset Fail" );
   };
 
+  // function to set default value.
   const defaultValue = () => {
     setMode( AppSettings.MODE );
     setBand( AppSettings.BAND );
@@ -142,6 +113,7 @@ const ConnectionSetting: React.FC<{
     setAPN( 'ciot' );
   };
 
+  // function to send command to set APN.
   const setAPN = async ( apn: string) => {
     setLoading( true );
     let ip,port;
@@ -171,6 +143,7 @@ const ConnectionSetting: React.FC<{
     else setErrorConnection( "Connection to RPI Error" );
   };
 
+  // function for save current setting.
   const saveSetting = async () => {
     if( ipPortInput() ){ 
       setErrorConnection( 'IP or Port is invalid' );
@@ -183,6 +156,7 @@ const ConnectionSetting: React.FC<{
     props.checkConnect();
   };
 
+  // function for save token.
   const saveToken = async ( token: string ) => {
     await Storage.set({ key: 'DBToken', value: token });
     setDBToken( token );

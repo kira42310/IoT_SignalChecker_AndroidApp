@@ -36,20 +36,22 @@ const HistorySearch: React.FC = () => {
   const [ refIMEI, setRefIMEI ] = useState<string>();
   const [ page, setPage ] = useState<number>(1);
   const [ hasMore, setHasMore ] = useState<boolean>(true);
-
   const [ data, setData ] = useState< retriveDataFromDBInterface[]>([]);
 
+  // ion life cycle before load into page, to get current time and set to input form.
   useIonViewWillEnter( () => {
     const tmp = new Date().toISOString();
     setDTFrom( tmp );
     setDTEnd( tmp );
   });
 
+  // ion life cycle after load into page, get data from database.
   useIonViewDidEnter( () => {
     searchData();
     getIMEIFromStorage();
   });
 
+  // function for search data in database, if dtFrom and dtEnd(dt is date time) is the same, input won't condition with dt in search.
   const searchData = async () => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -77,6 +79,7 @@ const HistorySearch: React.FC = () => {
       });
   };
 
+  // function for get next 10 data from database.
   const searchNext = async () => {
     const controller = new AbortController();
     const signal = controller.signal;
@@ -99,6 +102,7 @@ const HistorySearch: React.FC = () => {
       });
   };
 
+  // function for clear input and set current data to form.
   const clearInput = () => {
     const tmp = new Date().toISOString();
     setDTFrom( tmp );
@@ -106,11 +110,13 @@ const HistorySearch: React.FC = () => {
     setIMEI(""); 
   };
 
+  // function for get imei from storage.
   const getIMEIFromStorage = async () => {
     const res = await Storage.get({ key: 'imei' });
     if( res.value ) setIMEI( res.value );
   };
 
+  // function to create key for history card.
   function createKey( id: string ){
     return id;
   }
