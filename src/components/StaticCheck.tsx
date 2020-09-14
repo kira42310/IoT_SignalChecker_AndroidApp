@@ -68,7 +68,7 @@ const StaticCheck: React.FC<{
     checkRPiState();
   }, [ props ]);
 
-  // function to start static test and send info message to insert database to RPi board by mqtt protocal.
+  // function to start static test and send info message to insert database to RPi board by mqtt protocol.
   const startTest = async () => {
     setStartTestAlert( false );
 

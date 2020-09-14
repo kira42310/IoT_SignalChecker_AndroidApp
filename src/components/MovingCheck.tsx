@@ -79,7 +79,7 @@ const MovingCheck: React.FC<{
     else setErrorConnection( 'Location service not available' );
   };
 
-  // function for send command to get signal strength and put marker in the map and if want to insert database will send info message to insert database to RPi board by mqtt protocal.
+  // function for send command to get signal strength and put marker in the map and if want to insert database will send info message to insert database to RPi board by mqtt protocol.
   const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
     const location = await Geolocation.getCurrentPosition().catch( e => { return e; });

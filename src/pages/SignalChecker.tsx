@@ -151,7 +151,11 @@ const SignalChecker: React.FC = () => {
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log( e ) );
-    if( res && res !== "F" ){
+    if( res === "staticon" ){
+      setError( 'Auto static test is running' );
+      setIntervalCheckConnect();
+    }
+    else if( res && res !== "F" ){
       setIsConnect( true );
       setDisableBtn( true );
       setColorStatus( 'success' );
@@ -180,7 +184,7 @@ const SignalChecker: React.FC = () => {
     setLoading( false );
   };
 
-  // function for create message for insert database by mqtt protocal.
+  // function for create message for insert database by mqtt protocol.
   const prepareInfo = ( token: string, imei0: string = imei, imsi0: string = imsi, mode0: string = mode, band0: string = band ) => {
     if( imei0 !== '-' && imsi0 !== '-' && mode0 !== '-' && band0 !== '-' ){
       setInfo( 
