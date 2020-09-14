@@ -372,7 +372,7 @@ const SignalChecker: React.FC = () => {
       <IonModal isOpen={ connectionWindow }>
         <IonHeader translucent>
           <IonToolbar>
-            <IonTitle>Sigal and RPi Settings</IonTitle>
+            <IonTitle>Signal and RPi Settings</IonTitle>
             <IonButtons slot="end">
               <IonButton onClick={ () => setConnectionWindow(false) }>Close</IonButton>
             </IonButtons>

@@ -200,7 +200,7 @@ const ConnectionSetting: React.FC<{
         </IonRow>
         <IonRow>
           <IonCol size="8" className="ion-margin-top">
-            <IonLabel>Rasspberry Pi IP</IonLabel>
+            <IonLabel>Raspberry Pi IP</IonLabel>
             <IonItem>
               <IonInput value={rpiIP} onIonChange={(e) => setRPiIP(e.detail.value!)} color={validateIPAddress(rpiIP) ? "success" : "danger"} debounce={500} />
             </IonItem>
