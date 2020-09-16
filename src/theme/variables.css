@@ -318,6 +318,10 @@ http://ionicframework.com/docs/theming/ */
   transform: translateY(-56px) !important;
 }
 
+.md .loading-bottom{
+  height: 125%;
+}
+
 @media (prefers-color-scheme: dark) {
   /*
    * Dark Colors
