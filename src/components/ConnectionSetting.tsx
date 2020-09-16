@@ -42,18 +42,20 @@ const ConnectionSetting: React.FC<{
       if( await (await Storage.get({ key: 'mode'})).value ) {
         setMode( await (await Storage.get({ key: 'mode' })).value! );
         setBand( await (await Storage.get({ key: 'band' })).value! );
-        setRPiIP( await (await Storage.get({ key: 'rpiIP' })).value! );
-        setRPiPort( +await (await Storage.get({ key: 'rpiPort' })).value! );
       }
-      if( !props.mode && !props.band ){
-
+      if( sessionStorage.getItem( 'rpiIP' ) && sessionStorage.getItem( 'rpiPort' )){
+        setRPiIP( sessionStorage.getItem( 'rpiIP' )! );
+        setRPiPort( +sessionStorage.getItem( 'rpiPort' )! );
       }
-      if( await Storage.get({ key: 'DBToken' }) ){
+      if( sessionStorage.getItem( 'apn' ) ){
+        setAPNValue( sessionStorage.getItem( 'apn' )!);
+      }
+      if( await (await Storage.get({ key: 'DBToken' })).value! ){
         setDBToken( await (await Storage.get({ key: 'DBToken' })).value! );
       }
     };
     loadSetting();
-  },[ props ]);
+  },[]);
 
   // function for check ip and port is valid.
   const ipPortInput = () => {
@@ -114,7 +116,7 @@ const ConnectionSetting: React.FC<{
   };
 
   // function to send command to set APN.
-  const setAPN = async ( apn: string) => {
+  const setAPN = async ( apn: string ) => {
     setLoading( true );
     let ip,port;
     if( sessionStorage.getItem( 'rpiIP' ) && sessionStorage.getItem( 'rpiPort' )){
@@ -134,9 +136,11 @@ const ConnectionSetting: React.FC<{
       .then( response => response.json() )
       .then( data => { return data })
       .catch( e => console.log(e) );
+
     setLoading( false );
     if( res !== "F" ){ 
-      setAPNValue( res[0] );
+      setAPNValue( res );
+      sessionStorage.setItem( 'apn', res );
       setErrorConnection( "Set APN success" );
     }
     else if( res === "F" ) setErrorConnection( "Set APN Failed!" );
@@ -151,8 +155,8 @@ const ConnectionSetting: React.FC<{
     }
     await Storage.set({ key: 'mode', value: mode });
     await Storage.set({ key: 'band', value: band });
-    await Storage.set({ key: 'rpiIP', value: rpiIP });
-    await Storage.set({ key: 'rpiPort', value: rpiPort.toString() });
+    sessionStorage.setItem( 'rpiIP', rpiIP );
+    sessionStorage.setItem( 'rpiPort', rpiPort.toString() );
     props.checkConnect();
   };
 
@@ -250,6 +254,7 @@ const ConnectionSetting: React.FC<{
           inputs={[{ name: "apn", value: apn }]}
           buttons={[
             { text: "Set", handler: (data: any) => { setAPN( data.apn ); setAPNAlert( false ); } }, 
+            // { text: "Set", handler: (data: any) => { console.log( data.apn ); setAPNAlert( false ); } }, 
             { text: "Cancel", handler: () => { setAPNAlert( false ) } }
           ]}
           onDidDismiss={ () => setAPNAlert( false ) }

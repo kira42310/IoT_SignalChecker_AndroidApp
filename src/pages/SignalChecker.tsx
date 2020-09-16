@@ -31,7 +31,11 @@ import ManualCheck from "../components/ManualCheck";
 import { AppSettings } from "../AppSettings";
 import { disconnect } from "process";
 
-const { Storage, Network, } = Plugins;
+const { Storage, Network, App } = Plugins;
+
+App.addListener( 'backButton', () => {
+  App.exitApp();
+});
 
 const SignalChecker: React.FC = () => {
 
@@ -50,6 +54,7 @@ const SignalChecker: React.FC = () => {
   const [ staticWindow, setStaticWindow ] = useState<boolean>(false);
   const [ movingWindow, setMovingWindow ] = useState<boolean>(false);
   const [ movingWindowClose, setMovingWindowClose ] = useState<boolean>( false );
+  const [ pingWindowClose, setPingWindowClose ] = useState<boolean>( false );
   const [ manualWindow, setManualWindow ] = useState<boolean>( false );
   const [ disableBtn, setDisableBtn ] = useState<boolean>( false );
   const [ loading, setLoading ] = useState<boolean>(false);
@@ -71,8 +76,8 @@ const SignalChecker: React.FC = () => {
   // function for prepare url use to connect to RPi.
   const getURL = async () => {
     let url: string;
-    const ip = await (await Storage.get({ key: "rpiIP" })).value;
-    const port = await (await Storage.get({ key: "rpiPort" })).value;
+    const ip = sessionStorage.getItem( 'rpiIP' );
+    const port = sessionStorage.getItem( 'rpiPort' );
     if( ip && port ) { url = ip + ":" + port; }
     else{ url = AppSettings.RPI_IP + ":" + AppSettings.RPI_PORT };
     setRPiDestination( url );
@@ -82,6 +87,7 @@ const SignalChecker: React.FC = () => {
   // function for set checkConnect interval.
   const setIntervalCheckConnect = () => {
     clearInterval( timerId.current );
+    aController.current?.abort();
     checkConnect();
     timerId.current = setInterval( () => checkConnect(), AppSettings.CONNECTION_INTERVAL );
   };
@@ -230,12 +236,18 @@ const SignalChecker: React.FC = () => {
     if( tname === "moving" ){
       setMovingWindowClose( true );
     }
+    else if( tname === 'ping' ){
+      setPingWindowClose( true );
+    }
   };
 
   // function use to enable close button of auto moving test.
   const offAutoTest = ( tname: string ) => {
     if( tname === "moving" ){
       setMovingWindowClose( false );
+    }
+    else if( tname === 'ping' ){
+      setPingWindowClose( false );
     }
     setIntervalCheckConnect();
   };
@@ -391,19 +403,21 @@ const SignalChecker: React.FC = () => {
           <IonToolbar>
             <IonTitle>Ping</IonTitle>
             <IonButtons slot="end">
-              <IonButton onClick={ () => pingWindowSetInterval() }>Close</IonButton>
+              <IonButton disabled={ pingWindowClose } onClick={ () => pingWindowSetInterval() }>Close</IonButton>
             </IonButtons>
           </IonToolbar>
         </IonHeader>
         <PingSection 
           Disconnect={ disconnect }
+          onAutoTest={ onAutoTest }
+          offAutoTest={ offAutoTest }
           url={ rpiDestination! } />
       </IonModal>
 
       <IonModal isOpen={ staticWindow }>
         <IonHeader translucent>
           <IonToolbar>
-            <IonTitle>Static Test</IonTitle>
+            <IonTitle>Auto static Test</IonTitle>
             <IonButtons slot="end">
               <IonButton onClick={ () => setStaticWindow(false) }>Close</IonButton>
             </IonButtons>
@@ -419,7 +433,7 @@ const SignalChecker: React.FC = () => {
       <IonModal isOpen={ movingWindow }>
         <IonHeader translucent>
           <IonToolbar>
-            <IonTitle>Moving Test</IonTitle>
+            <IonTitle>Auto moving Test</IonTitle>
             <IonButtons slot="end">
               <IonButton disabled={ movingWindowClose } onClick={ () => setMovingWindow( false ) }>Close</IonButton>
             </IonButtons>

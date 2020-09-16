@@ -245,7 +245,7 @@ const MovingCheck: React.FC<{
       </IonRow>
       <IonRow>
         <IonCol>
-          <IonLabel>Minutes</IonLabel>
+          <IonLabel>Interval (min)</IonLabel>
           <IonButton onClick={ () => setMinPicker( true )} expand="full" disabled={ !startStopBtn }>{ intervalMin } min.</IonButton>
           <IonPicker 
             isOpen={ minPicker } 
@@ -262,7 +262,7 @@ const MovingCheck: React.FC<{
           />
         </IonCol>
         <IonCol>
-          <IonLabel>Seconds</IonLabel>
+          <IonLabel>(sec)</IonLabel>
           <IonButton onClick={ () => setSecPicker( true )} expand="full" disabled={ !startStopBtn }>{ intervalSec } Sec.</IonButton>
           <IonPicker 
             isOpen={ secPicker } 
