@@ -69,18 +69,21 @@ const ManualCheck: React.FC<{
   // function for send command to RPi board to get signal stregth and for on UI and if insert database is yes, it will prepare info message for RPi to insert database by mqtt protocol.
   const signalStrength = async ( insertDB: boolean = false ) => {
     setLoading(true);
-    const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
 
     let data = '';
-    if( insertDB && location.code ){ 
-      setErrorConnection( 'No location service, insert DB failed' );
-      insertDB = false;
+    if( insertDB ){
+      const location = await Geolocation.getCurrentPosition().catch( e => { return e; });
+
+      if( location.code ){
+        setErrorConnection( 'No location service, insert DB failed' );
+        insertDB = false;
+      }
+      else if( props.info === '' ){
+        setErrorConnection( 'No database token, insert database failed');
+        insertDB = false;
+      }
+      else data = props.info + ',' + location.coords.latitude.toString() + ',' + location.coords.longitude.toString();
     }
-    else if( insertDB && props.info === '' ){
-      setErrorConnection( 'No database token, insert database failed');
-      insertDB = false;
-    }
-    else data = props.info + ',' + location.coords.latitude.toString() + ',' + location.coords.longitude.toString();
 
     let url = 'http://' + props.url + '/signalStrength?insert=';
     if( insertDB ) url = url + 'y&dblocation=' + AppSettings.MQT_LOCATION + '&data=' + data;
