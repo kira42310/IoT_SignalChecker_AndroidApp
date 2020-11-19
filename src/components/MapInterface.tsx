@@ -134,9 +134,9 @@ const MapInterface: React.FC<{
           onTilesLoaded={ boundChange }>
           {
             markers.map( data => (
-              <Marker key={ data._id.$oid } 
-                position={{ lat: +data.latitude.$numberDecimal, lng: +data.longitude.$numberDecimal }} 
-                onClick={ e => infoWindowPanel( +data.latitude.$numberDecimal, +data.longitude.$numberDecimal, data[props.showValue] )} 
+              <Marker key={ data.id } 
+                position={{ lat: +data.latitude, lng: +data.longitude }} 
+                onClick={ e => infoWindowPanel( +data.latitude, +data.longitude, data[props.showValue] )} 
                 options={{ icon: convertDataToIcon( data[props.showValue] ) }}
               />
             ))

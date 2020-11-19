@@ -168,7 +168,7 @@ const HistorySearch: React.FC = () => {
         </IonCard>
         {
           data.map( info => (
-            <HistoryCard key={ createKey( info._id.$oid ) }
+            <HistoryCard key={ createKey( info.id ) }
               data={ info }
             />
           ))

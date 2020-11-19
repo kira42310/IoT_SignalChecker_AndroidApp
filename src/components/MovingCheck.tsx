@@ -157,7 +157,7 @@ const MovingCheck: React.FC<{
   // function for convert data to use with marker.
   const convertToMarkerData = ( data: any, location: GeolocationPosition ): markerInterface => {
     return { 
-      '_id': { $oid: Date.now().toString() },
+      'id': Date.now().toString(),
       'latitude': location.coords.latitude, 
       'longitude': location.coords.longitude, 
       'scRSSI': data['scRSSI'],
@@ -174,7 +174,7 @@ const MovingCheck: React.FC<{
 
   // function to clear marker in the map.
   const clearMarker = () => {
-    markers.current = markers.current.filter( m => m._id.$oid === "0" );
+    markers.current = markers.current.filter( m => m.id === "0" );
     sessionStorage.removeItem('movingTestMarker')
     setUpdate( update + 1 )
   };
@@ -286,7 +286,7 @@ const MovingCheck: React.FC<{
         >
         {
           markers.current.map( data => (
-            <Marker key={ data._id.$oid } 
+            <Marker key={ data.id } 
               position={{ lat: data.latitude, lng: data.longitude }} 
               options={{ icon: convertDataToIcon( data['scRSSI'] ) }}
             />

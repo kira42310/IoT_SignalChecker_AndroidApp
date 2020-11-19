@@ -43,7 +43,7 @@ export interface signalColorInterface {
 };
 
 export interface markerInterface {  
-  _id: { $oid: string },
+  id: string,
   latitude: number, 
   longitude: number, 
   scRSSI: number, 
@@ -53,9 +53,9 @@ export interface markerInterface {
 };
 
 export interface markerInterfaceMongo {
-  _id: { $oid: string },
-  latitude: { $numberDecimal: number }, 
-  longitude: { $numberDecimal: number }, 
+  id: string,
+  latitude: number, 
+  longitude: number, 
   scRSSI: number, 
   scRSRP: number,
   scSINR: number,
@@ -63,15 +63,15 @@ export interface markerInterfaceMongo {
 };
 
 export interface retriveDataFromDBInterface {
-  _id: { $oid: string },
-  date: { $date: Date },
+  id: string,
+  date: Date,
   username: string,
   imei: string,
   imsi: string,
   mode: string,
   band: string,
-  latitude: { $numberDecimal: number },
-  longitude: { $numberDecimal: number },
+  latitude: number,
+  longitude: number,
   scRSSI: string,
   scRSRP: string,
   scSINR: string,

@@ -7,7 +7,7 @@ const HistoryCard: React.FC<{ data: retriveDataFromDBInterface }> = (props) => {
 
   // function for convert UTC time to human readable.
   const timestampConverter = () => {
-    const rawData = new Date(props.data.date.$date);
+    const rawData = new Date(props.data.date);
     return (
       rawData.getDate() + " "
       + rawData.toLocaleString( 'default', { month: 'short' }) + " "
@@ -23,7 +23,7 @@ const HistoryCard: React.FC<{ data: retriveDataFromDBInterface }> = (props) => {
         <IonGrid>
           <IonRow>
             <IonCol size="4">
-              <MapCustomView latitude={ +props.data.latitude.$numberDecimal } longtitude={ +props.data.longitude.$numberDecimal } />
+              <MapCustomView latitude={ +props.data.latitude } longtitude={ +props.data.longitude } />
             </IonCol>
             <IonCol>
               <p>Date</p>

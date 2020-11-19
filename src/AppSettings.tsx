@@ -22,9 +22,9 @@ export class AppSettings {
     else if( data < -90 && data >= -95 ) return "darkgreen"
     else if( data < -95 && data >= -100 ) return "greenyellow"
     else if( data < -100 && data >= -110 ) return "yellow"
-    else if( data < -110 && data >= -116 ) return "red"
-    else if( data < -116 && data >= -124 ) return "grey"
-    else if( data < -124 ) return "darkblue"
+    else if( data < -110 && data >= -116 ) return "orange"
+    else if( data < -116 && data >= -124 ) return "darkorange"
+    else if( data < -124 ) return "red"
     else return "black"
   };
 
